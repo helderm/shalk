@@ -1,0 +1,7 @@
+#!/bin/bash
+VIRTENV_HOME=$OPENSHIFT_DEPENDENCIES_DIR/virtualenv/
+source $VIRTENV_HOME/bin/activate
+
+#load database if needed
+dbload &
+

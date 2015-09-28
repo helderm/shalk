@@ -1,3 +1,3 @@
 For information about markers, consult the documentation:
 
-https://docs.openshift.org/origin-m4/oo_user_guide.html#using-cartridges
+http://openshift.github.io/documentation/oo_user_guide.html#markers
