@@ -3,5 +3,5 @@ VIRTENV_HOME=$OPENSHIFT_DEPENDENCIES_DIR/virtualenv/
 source $VIRTENV_HOME/bin/activate
 
 #load database if needed
-dbload &
+nohup dbload  > ${OPENSHIFT_DIY_LOG_DIR}/shalk.log 2>&1 &
 
