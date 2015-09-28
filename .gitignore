@@ -1,3 +1,5 @@
 devenv
 *egg-info
 *pyc
+build
+dist
