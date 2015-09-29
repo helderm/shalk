@@ -3,6 +3,8 @@
 import pymongo as pym
 import os
 
+EXP_DOC_COUNT = 20000000
+
 def main():
 
     print '* Executing database import procedure...'
@@ -15,9 +17,12 @@ def main():
     db = client['shalk']
 
     # if we have data already, do nothing
-    if db['ngrams'].count() > 0:
+    if db['ngrams'].count() > EXP_DOC_COUNT:
         print '* Database already has data, aborting import procedure.'
         return
+
+    # cleans the collection and start importing again
+    db['ngrams'].drop()
 
     # import files into db
     data_dir = os.getenv('OPENSHIFT_DATA_DIR')
@@ -48,16 +53,19 @@ def load_file_into_db(db, datafile):
                 key = 'word{0}'.format(i)
                 ngram[key] = word.decode('utf-8', 'ignore')
 
-            db['ngrams'].insert_one(ngram)
+            ngrams.append(ngram)
 
             count += 1
             if count % mod == 0:
-                print '- Inserted [{0}] documents...'.format((count / mod) * mod )
+                print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
+                db['ngrams'].insert_many(ngrams)
+
             #ngrams.append(ngram)
 
+    print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
+    db['ngrams'].insert_many(ngrams)
+
     print '* Finished importing file [{0}]!'.format(datafile)
-    #print '* Inserting [{0}] ngrams into db...'.format(len(ngrams))
-    #db['ngrams'].insert_many(ngrams)
 
 
 if __name__ == '__main__':
