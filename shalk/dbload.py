@@ -41,7 +41,7 @@ def load_file_into_db(db, datafile):
     print '* Importing file [{0}] into db...'.format(datafile)
 
     count = 0
-    mod = 10000
+    mod = 20000
     with open(datafile, 'r') as f:
         ngrams = []
         for line in f:
