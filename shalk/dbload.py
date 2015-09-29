@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pymongo as pym
-import os
+import os, sys
 
 EXP_DOC_COUNT = 20000000
 
@@ -40,8 +40,8 @@ def load_file_into_db(db, datafile):
 
     print '* Importing file [{0}] into db...'.format(datafile)
 
-    #count = 0
-    #mod = 20000
+    count = 0
+    mod = 20000
     with open(datafile, 'r') as f:
         ngrams = []
         for line in f:
@@ -59,6 +59,8 @@ def load_file_into_db(db, datafile):
             count += 1
             if count % mod == 0:
                 print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
+                sys.stdout.flush()
+
                 db['ngrams'].insert_many(ngrams)
                 ngrams = []
 
