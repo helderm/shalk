@@ -53,12 +53,14 @@ def load_file_into_db(db, datafile):
                 key = 'word{0}'.format(i)
                 ngram[key] = word.decode('utf-8', 'ignore')
 
+
             ngrams.append(ngram)
 
-            #count += 1
-            #if count % mod == 0:
-            #    print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
-            #    db['ngrams'].insert_many(ngrams)
+            count += 1
+            if count % mod == 0:
+                print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
+                db['ngrams'].insert_many(ngrams)
+                ngrams = []
 
             #ngrams.append(ngram)
 
