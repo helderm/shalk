@@ -3,7 +3,7 @@
 import pymongo as pym
 import os, sys
 
-EXP_DOC_COUNT = 20000000
+EXP_DOC_COUNT = 2000000
 
 def main():
 
