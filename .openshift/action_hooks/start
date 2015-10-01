@@ -2,4 +2,4 @@
 VIRTENV_HOME=$OPENSHIFT_DEPENDENCIES_DIR/virtualenv/
 echo "Running app..."
 source $VIRTENV_HOME/bin/activate
-nohup shalk --host=${OPENSHIFT_DIY_IP} --port=${OPENSHIFT_DIY_PORT} > ${OPENSHIFT_DIY_LOG_DIR}/shalk.log 2>&1 &
+nohup shalk --host=${OPENSHIFT_DIY_IP} --port=${OPENSHIFT_DIY_PORT} --mongodb_url=${OPENSHIFT_MONGODB_DB_URL} > ${OPENSHIFT_DIY_LOG_DIR}/shalk.log 2>&1 &
