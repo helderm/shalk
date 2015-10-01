@@ -20,7 +20,7 @@ class PoemHandler(RequestHandler):
         size = self.get_argument('size', 10)
 
         poem = text
-        for x in range(0, size):
+        for x in range(0, int(size)):
             poem += ' ' + self.nextWord(poem, self.db)
 
         self.write(poem)
