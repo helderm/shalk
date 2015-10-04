@@ -39,7 +39,7 @@ def Poem(object):
 				tuples.append(tuple)
 		return tuples
 
-	#This is our ngram generating function. It assumes at least two words in the input.    
+	#This is our ngram generating function. 
 	def nextWord(text, db):
 		words = text.split(" ")
 		N = len(words)
@@ -64,14 +64,28 @@ def Poem(object):
 			possible3grams = list(db['ngrams'].find({"word0" : words[N-2], "word1" : words[N-1], "syllables" = syl}))
 			tuples = weightedTuples(possible3grams, 4, u'word2')
 			if len(possible3grams) > 0:
-				tuples = []
 				if(len(tuples) > 0):
 					 return weightedChoice(tuples)
 				possible2grams = list(db['ngrams'].find({"word0" : words[N-1], "syllables" = syl}))
 				tuples = weightedTuples(possible2grams, 3, u'word1')
 				if(len(tuples) > 0):
 					 return weightedChoice(tuples)
-		#If we've reached this point, no 2 grams are available. We generate a random word:
+		if(N>=1):
+			possible2grams = list(db['ngrams'].find({"word0" : words[N-1], "syllables" = syl}))
+			tuples = weightedTuples(possible2grams, 3, u'word1')
+			if len(possible2grams) > 0:
+				if(len(tuples) > 0):
+					 return weightedChoice(tuples)
+				possible1grams = list(db['ngrams'].find({"syllables" = syl}))
+				tuples = weightedTuples(possible2grams, 3, u'word1')
+				if(len(tuples) > 0):
+					 return weightedChoice(tuples)
+					 
+		possible1grams = list(db['ngrams'].find({"syllables" = syl}))
+		tuples = weightedTuples(possible4grams, 5, u'word3')
+			if(len(tuples) > 0):
+				 return weightedChoice(tuples)
+		#If we've reached this point, everything failed:
 		return "random"
 
 
