@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
 import pymongo as pym
+
 import os, sys
 
-EXP_DOC_COUNT = 2000000
+from nltk.corpus import cmudict
+
+EXP_DOC_COUNT = 0
+d = cmudict.dict()
+
 
 def main():
 
@@ -17,24 +22,30 @@ def main():
     db = client['shalk']
 
     # if we have data already, do nothing
-    if db['ngrams'].count() > EXP_DOC_COUNT:
-        print '* Database already has data, aborting import procedure.'
-        return
+   #if db['ngrams'].count() > EXP_DOC_COUNT:
+    #    print '* Database already has data, aborting import procedure.'
+     #   return'''
 
-    # cleans the collection and start importing again
+    #cleans the collection and start importing again
     db['ngrams'].drop()
 
     # import files into db
-    data_dir = os.getenv('OPENSHIFT_DATA_DIR')
-    files = [ '{0}/ngrams/w2_.txt'.format(data_dir),
-              '{0}/ngrams/w3_.txt'.format(data_dir),
-              '{0}/ngrams/w4_.txt'.format(data_dir) ]
+    data_dir = os.getenv('')
+    files = [ 'data/w2_.txt'.format(data_dir),
+              'data/w3_.txt'.format(data_dir),
+              'data/w4_.txt'.format(data_dir) ]
 
     for datafile in files:
         load_file_into_db(db, datafile)
 
     print '* Database import finished!'
 
+def countSyllables(word):
+        word = word.lower()
+        if word not in d:
+                return 0
+        else:
+            return sum(l.isdigit() for s in d[word][0] for l in s)
 
 def load_file_into_db(db, datafile):
 
@@ -49,18 +60,32 @@ def load_file_into_db(db, datafile):
 
             ngram = {}
             ngram['freq'] = int(parts[0])
+            insert = True
+            syllables = 0
             for i, word in enumerate(parts[1:]):
+                # if a word has no entry in the cmu dictionary -> don't insert
+                syllables = countSyllables(word)
+                if not syllables:
+                    insert = False
+                    break
+                else:
+                    ngram['syllables'] = syllables
                 key = 'word{0}'.format(i)
                 ngram[key] = word.decode('utf-8', 'ignore')
 
-            ngrams.append(ngram)
+
+            '''ngrams.append(ngram)
 
             count += 1
             if count % mod == 0:
                 print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
-    		sys.stdout.flush()
+    		    sys.stdout.flush()
                 db['ngrams'].insert_many(ngrams)
-		ngrams = []
+		        ngrams = []
+               db['ngrams'].insert_many(ngrams)'''
+
+            if insert:
+                ngrams.append(ngram)
 
     print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
     sys.stdout.flush()
