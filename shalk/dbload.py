@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import pymongo as pym
-import os
+import os, sys
 
-EXP_DOC_COUNT = 20000000
+EXP_DOC_COUNT = 2000000
 
 def main():
 
@@ -58,11 +58,12 @@ def load_file_into_db(db, datafile):
             count += 1
             if count % mod == 0:
                 print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
+    		sys.stdout.flush()
                 db['ngrams'].insert_many(ngrams)
-
-            #ngrams.append(ngram)
+		ngrams = []
 
     print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
+    sys.stdout.flush()
     db['ngrams'].insert_many(ngrams)
 
     print '* Finished importing file [{0}]!'.format(datafile)
