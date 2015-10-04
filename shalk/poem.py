@@ -5,7 +5,6 @@ import PoemTemplate as pt
 
 
 class Poem():
-
     def __init__(self, db, pattern):
         self.db = db
         self.pattern = pattern

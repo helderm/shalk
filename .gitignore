@@ -3,3 +3,4 @@ devenv
 *pyc
 build
 dist
+shalk/dbload.py

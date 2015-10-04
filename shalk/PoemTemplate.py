@@ -1,5 +1,3 @@
-__author__ = 'marcel'
-
 import numpy as np
 
 
@@ -12,7 +10,6 @@ class PoemTemplate:
         You can also passed predefined types of poems (TODO: add more).
     """
     haiku = ['*****', '*******', '*****']
-    'swsws'
     averageSyllablesPerWord = 2;
     standardDerivation = 1;
 

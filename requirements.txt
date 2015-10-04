@@ -3,3 +3,4 @@ tornado
 argparse
 pymongo
 nltk
+numpy

@@ -3,7 +3,6 @@
 import pymongo as pym
 
 import os, sys
-
 from nltk.corpus import cmudict
 
 EXP_DOC_COUNT = 0
@@ -31,9 +30,9 @@ def main():
 
     # import files into db
     data_dir = os.getenv('')
-    files = [ 'data/w2_.txt'.format(data_dir),
-              'data/w3_.txt'.format(data_dir),
-              'data/w4_.txt'.format(data_dir) ]
+    files = [ '../data/w2_.txt'.format(data_dir),
+              '../data/w3_.txt'.format(data_dir),
+              '../data/w4_.txt'.format(data_dir) ]
 
     for datafile in files:
         load_file_into_db(db, datafile)
