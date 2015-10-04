@@ -43,6 +43,7 @@ class Poem():
 
     #This is our ngram generating function. 
     def nextWord(self, text, db, syl):
+        text = text[0:len(text)-1]
         words = text.split(" ")
         N = len(words)
         
@@ -74,11 +75,11 @@ class Poem():
                     return self.weightedChoice(tuples)
         if(N>=1):
             possible2grams = list(db['ngrams'].find({"word0" : words[N-1], "syllables" : syl}))
+            possible2gramsRelaxed = list(db['ngrams'].find({"word0" : words[N-1]}))
             tuples = self.weightedTuples(possible2grams, 3, u'word1')
             if len(possible2grams) > 0:
                 if(len(tuples) > 0):
                     return self.weightedChoice(tuples)
-                     
         possible1grams = list(db['ngrams'].find({"syllables" : syl}))
         tuples = self.weightedTuples(possible1grams, 5, u'word3')
         if(len(tuples) > 0):
