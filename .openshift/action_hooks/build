@@ -25,7 +25,7 @@ fi
 if [ ! -d $OPENSHIFT_DATA_DIR/nltk ]; then
     echo "Downloading NLTK corpora..."
     mkdir -p $OPENSHIFT_DATA_DIR/nltk
-    python -m nltk.downloader cmudict punkt -d $OPENSHIFT_DATA_DIR/nltk
+    python -m nltk.downloader cmudict punkt maxent_treebank_pos_tagger -d $OPENSHIFT_DATA_DIR/nltk
 fi
 
 deactivate
