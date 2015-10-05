@@ -25,8 +25,14 @@ def main():
     #    print '* Database already has data, aborting import procedure.'
     #   return'''
 
-    #cleans the collection and start importing again
+    #cleans the collection and create indexes
     db['ngrams'].drop()
+    db['ngrams'].create_index([('word0', pym.ASCENDING)])
+    db['ngrams'].create_index([('word1', pym.ASCENDING)])
+    db['ngrams'].create_index([('word2', pym.ASCENDING)])
+    db['ngrams'].create_index([('word3', pym.ASCENDING)])
+    db['ngrams'].create_index([('syllables', pym.ASCENDING)])
+    db['ngrams'].create_index([('freq', pym.DESCENDING)])
 
     # import files into db
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
