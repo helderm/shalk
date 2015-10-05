@@ -21,10 +21,10 @@ if [ ! -d $OPENSHIFT_DATA_DIR/ngrams ]; then
     cp $OPENSHIFT_REPO_DIR/data/* $OPENSHIFT_DATA_DIR/ngrams/
 fi
 
-if [ ! -d $OPENSHIFT_HOMEDIR/nltk_data ]; then
+if [ ! -d $OPENSHIFT_DATA_DIR/nltk ]; then
     echo "Downloading NLTK corpora..."
-    mkdir -p $OPENSHIFT_HOMEDIR/nltk_data
-    exec `python -m nltk.downloader all`
+    mkdir -p $OPENSHIFT_DATA_DIR/nltk
+    exec `python -m nltk.downloader brown -d $OPENSHIFT_DATA_DIR/nltk`
 fi
 
 deactivate
