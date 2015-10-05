@@ -3,11 +3,11 @@
 import pymongo as pym
 
 import os, sys
+import nltk
 from nltk.corpus import cmudict
+from nltk.tag import pos_tag, map_tag
 
 EXP_DOC_COUNT = 0
-d = cmudict.dict()
-
 
 def main():
 
@@ -29,10 +29,16 @@ def main():
     db['ngrams'].drop()
 
     # import files into db
-    data_dir = os.getenv('OPENSHIFT_DATA_DIR', '..')
-    files = [ '{0}/data/w2_.txt'.format(data_dir),
-              '{0}/data/w3_.txt'.format(data_dir),
-              '{0}/data/w4_.txt'.format(data_dir) ]
+    base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+    if not base_data_dir:
+        base_data_dir = '../data/'
+
+    #
+    nltk.data.path = [ '{0}nltk/'.format(base_data_dir) ]
+
+    files = [ '{0}ngrams/w2_.txt'.format(base_data_dir),
+              '{0}ngrams/w3_.txt'.format(base_data_dir),
+              '{0}ngrams/w4_.txt'.format(base_data_dir) ]
 
     for datafile in files:
         load_file_into_db(db, datafile)
@@ -91,9 +97,6 @@ def load_file_into_db(db, datafile):
 
 
 def get_last_word_types(ngram):
-    import nltk
-    from nltk.tag import pos_tag, map_tag
-
     text = nltk.word_tokenize(ngram)
     posTagged = pos_tag(text)
     simplifiedTags = [(word, map_tag('en-ptb', 'universal', tag)) for word, tag in posTagged]
@@ -103,6 +106,8 @@ def get_last_word_types(ngram):
 
 def count_syllables(word):
         word = word.lower()
+        d = cmudict.dict()
+
         if word not in d:
                 return 0
         else:
