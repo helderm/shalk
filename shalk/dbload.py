@@ -35,17 +35,18 @@ def main():
 
     #
     nltk.data.path = [ '{0}nltk/'.format(base_data_dir) ]
+    cdict = cmudict.dict()
 
     files = [ '{0}ngrams/w2_.txt'.format(base_data_dir),
               '{0}ngrams/w3_.txt'.format(base_data_dir),
               '{0}ngrams/w4_.txt'.format(base_data_dir) ]
 
     for datafile in files:
-        load_file_into_db(db, datafile)
+        load_file_into_db(db, datafile, cdict)
 
     print '* Database import finished!'
 
-def load_file_into_db(db, datafile):
+def load_file_into_db(db, datafile, cdict):
 
     print '* Importing file [{0}] into db...'.format(datafile)
 
@@ -62,7 +63,7 @@ def load_file_into_db(db, datafile):
             syllables = 0
             for i, word in enumerate(parts[1:]):
                 # if a word has no entry in the cmu dictionary -> don't insert
-                syllables = count_syllables(word)
+                syllables = count_syllables(word, cdict)
                 if not syllables:
                     insert = False
                     break
@@ -99,19 +100,19 @@ def load_file_into_db(db, datafile):
 def get_last_word_types(ngram):
     text = nltk.word_tokenize(ngram)
     posTagged = pos_tag(text)
-    simplifiedTags = [(word, map_tag('en-ptb', 'universal', tag)) for word, tag in posTagged]
+    lastword_tag = map_tag('en-ptb', 'universal', posTagged[-1][1])
+    #simplifiedTags = [(word, map_tag('en-ptb', 'universal', tag)) for word, tag in posTagged]
 
-    return simplifiedTags[-1][1]
+    return lastword_tag
 
 
-def count_syllables(word):
+def count_syllables(word, cdict):
         word = word.lower()
-        d = cmudict.dict()
 
-        if word not in d:
+        if word not in cdict:
                 return 0
         else:
-            return sum(l.isdigit() for s in d[word][0] for l in s)
+            return sum(l.isdigit() for s in cdict[word][0] for l in s)
 
 if __name__ == '__main__':
     main()
