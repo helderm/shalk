@@ -21,30 +21,23 @@ def main():
     db = client['shalk']
 
     # if we have data already, do nothing
-   #if db['ngrams'].count() > EXP_DOC_COUNT:
+    #if db['ngrams'].count() > EXP_DOC_COUNT:
     #    print '* Database already has data, aborting import procedure.'
-     #   return'''
+    #   return'''
 
     #cleans the collection and start importing again
     db['ngrams'].drop()
 
     # import files into db
-    data_dir = os.getenv('')
-    files = [ '../data/w2_.txt'.format(data_dir),
-              '../data/w3_.txt'.format(data_dir),
-              '../data/w4_.txt'.format(data_dir) ]
+    data_dir = os.getenv('OPENSHIFT_DATA_DIR', '..')
+    files = [ '{0}/data/w2_.txt'.format(data_dir),
+              '{0}/data/w3_.txt'.format(data_dir),
+              '{0}/data/w4_.txt'.format(data_dir) ]
 
     for datafile in files:
         load_file_into_db(db, datafile)
 
     print '* Database import finished!'
-
-def countSyllables(word):
-        word = word.lower()
-        if word not in d:
-                return 0
-        else:
-            return sum(l.isdigit() for s in d[word][0] for l in s)
 
 def load_file_into_db(db, datafile):
 
@@ -63,28 +56,32 @@ def load_file_into_db(db, datafile):
             syllables = 0
             for i, word in enumerate(parts[1:]):
                 # if a word has no entry in the cmu dictionary -> don't insert
-                syllables = countSyllables(word)
+                syllables = count_syllables(word)
                 if not syllables:
                     insert = False
                     break
-                else:
-                    ngram['syllables'] = syllables
+
+                # added num syllables
+                ngram['syllables'] = syllables
+
+                # add word
                 key = 'word{0}'.format(i)
                 ngram[key] = word.decode('utf-8', 'ignore')
 
+            if not insert:
+                continue
 
-            '''ngrams.append(ngram)
+            # add the type of the last word
+            wtype = get_last_word_types(line.rstrip().replace('\t', ' ').decode('utf-8', 'ignore'))
+            ngram['type'] = wtype
 
+            ngrams.append(ngram)
             count += 1
             if count % mod == 0:
                 print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
-    		    sys.stdout.flush()
+                sys.stdout.flush()
                 db['ngrams'].insert_many(ngrams)
-		        ngrams = []
-               db['ngrams'].insert_many(ngrams)'''
-
-            if insert:
-                ngrams.append(ngram)
+                ngrams = []
 
     print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
     sys.stdout.flush()
@@ -92,6 +89,24 @@ def load_file_into_db(db, datafile):
 
     print '* Finished importing file [{0}]!'.format(datafile)
 
+
+def get_last_word_types(ngram):
+    import nltk
+    from nltk.tag import pos_tag, map_tag
+
+    text = nltk.word_tokenize(ngram)
+    posTagged = pos_tag(text)
+    simplifiedTags = [(word, map_tag('en-ptb', 'universal', tag)) for word, tag in posTagged]
+
+    return simplifiedTags[-1][1]
+
+
+def count_syllables(word):
+        word = word.lower()
+        if word not in d:
+                return 0
+        else:
+            return sum(l.isdigit() for s in d[word][0] for l in s)
 
 if __name__ == '__main__':
     main()
