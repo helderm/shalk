@@ -3,13 +3,13 @@ VIRTENV_HOME=$OPENSHIFT_DEPENDENCIES_DIR/virtualenv/
 
 echo "Installing dependencies..."
 
-# Delete previously built virtualenv
-if [ -d $VIRTENV_HOME ]; then
-    rm -rf $VIRTENV_HOME
+# create virtualenv
+if [ ! -d $VIRTENV_HOME ]; then
+    # Create virtualenv and install necessary packages
+    virtualenv --no-site-packages $VIRTENV_HOME
 fi
 
-# Create virtualenv and install necessary packages
-virtualenv --no-site-packages $VIRTENV_HOME
+# activate virtualenv
 source $VIRTENV_HOME/bin/activate
 
 #install dependencies
@@ -21,10 +21,11 @@ if [ ! -d $OPENSHIFT_DATA_DIR/ngrams ]; then
     cp $OPENSHIFT_REPO_DIR/data/* $OPENSHIFT_DATA_DIR/ngrams/
 fi
 
+# install nltk files
 if [ ! -d $OPENSHIFT_DATA_DIR/nltk ]; then
     echo "Downloading NLTK corpora..."
     mkdir -p $OPENSHIFT_DATA_DIR/nltk
-    python -m nltk.downloader cmudict -d $OPENSHIFT_DATA_DIR/nltk
+    python -m nltk.downloader cmudict punkt -d $OPENSHIFT_DATA_DIR/nltk
 fi
 
 deactivate
