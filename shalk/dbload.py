@@ -51,7 +51,7 @@ def load_file_into_db(db, datafile, cdict):
     print '* Importing file [{0}] into db...'.format(datafile)
 
     count = 0
-    mod = 100000
+    mod = 10000
     with open(datafile, 'r') as f:
         ngrams = []
         for line in f:
@@ -85,7 +85,7 @@ def load_file_into_db(db, datafile, cdict):
             ngrams.append(ngram)
             count += 1
             if count % mod == 0:
-                print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
+                print '- Inserted [{0}] ngrams into db...'.format(len(ngrams) * (count / mod))
                 sys.stdout.flush()
                 db['ngrams'].insert_many(ngrams)
                 ngrams = []
