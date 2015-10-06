@@ -11,16 +11,12 @@ class PoemHandler(RequestHandler):
     def initialize(self, db):
         self.db = db
 
-    def get(self):
-        query = self.get_argument('query')
-        limit = self.get_argument('limit', 30)
-        try:
-            jquery = json.loads(query)
-        except ValueError:
-            raise HTTPError(400)
+    def post(self):
+        body = json.loads(self.request.body)
+        query = body['query']
+        limit = body['limit']
 
-        cursor = self.db['ngrams'].find(jquery, {'_id':0}).limit(limit)
-
+        cursor = self.db['ngrams'].find(query, {'_id':0}).limit(limit)
         self.write(json.dumps(list(cursor)))
 
 def main():
