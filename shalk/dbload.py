@@ -7,7 +7,7 @@ import nltk
 from nltk.corpus import cmudict
 from nltk.tag import pos_tag, map_tag
 
-EXP_DOC_COUNT = 0
+EXP_DOC_COUNT = 1 * 1000 * 1000
 
 def main():
 
@@ -21,9 +21,9 @@ def main():
     db = client['shalk']
 
     # if we have data already, do nothing
-    #if db['ngrams'].count() > EXP_DOC_COUNT:
-    #    print '* Database already has data, aborting import procedure.'
-    #   return'''
+    if db['ngrams'].count() > EXP_DOC_COUNT:
+        print '* Database already has data, aborting import procedure.'
+       return
 
     #cleans the collection and create indexes
     db['ngrams'].drop()
