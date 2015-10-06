@@ -23,7 +23,7 @@ def main():
     # if we have data already, do nothing
     if db['ngrams'].count() > EXP_DOC_COUNT:
         print '* Database already has data, aborting import procedure.'
-       return
+        return
 
     #cleans the collection and create indexes
     db['ngrams'].drop()
@@ -87,6 +87,8 @@ def load_file_into_db(db, datafile, cdict):
             # add the type of the last word
             wtype = get_last_word_types(line.rstrip().replace('\t', ' ').decode('utf-8', 'ignore'))
             ngram['type'] = wtype
+
+            ngram['file'] = f.rsplit('/')[0]
 
             ngrams.append(ngram)
             count += 1
