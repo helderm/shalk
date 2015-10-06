@@ -88,8 +88,6 @@ def load_file_into_db(db, datafile, cdict):
             wtype = get_last_word_types(line.rstrip().replace('\t', ' ').decode('utf-8', 'ignore'))
             ngram['type'] = wtype
 
-            ngram['file'] = f.rsplit('/')[0]
-
             ngrams.append(ngram)
             count += 1
             if count % mod == 0:

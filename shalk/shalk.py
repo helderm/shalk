@@ -23,6 +23,7 @@ class PoemHandler(RequestHandler):
 
         res = []
         for doc in cursor:
+            del doc['_id']
             res.append(doc)
 
         self.write(json.dumps(res))
