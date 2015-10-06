@@ -13,7 +13,7 @@ class PoemHandler(RequestHandler):
 
     def get(self):
         query = self.get_argument('query')
-        limit - self.get_argument('limit', 30)
+        limit = self.get_argument('limit', 30)
         try:
             jquery = json.loads(query)
         except ValueError:
