@@ -13,13 +13,19 @@ class PoemHandler(RequestHandler):
 
     def get(self):
         query = self.get_argument('query')
+        limit - self.get_argument('limit', 30)
         try:
             jquery = json.loads(query)
         except ValueError:
             raise HTTPError(400)
 
-        res = self.db['ngrams'].find(jquery)
-        self.write(json.dumps(list(res)))
+        cursor = self.db['ngrams'].find(jquery).limit(limit)
+
+        res = []
+        for doc in cursor:
+            res.append(doc)
+
+        self.write(json.dumps(res))
 
 def main():
     define("host", default="127.0.0.1", help="Host IP")
