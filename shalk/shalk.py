@@ -5,8 +5,20 @@ import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import Application, RequestHandler, HTTPError
 
+from poem import Poem
 
 class PoemHandler(RequestHandler):
+
+    def initialize(self, db):
+        self.db = db
+
+    def get(self):
+        pattern = ['*****', '*******', '*****']
+        poem = Poem(pattern)
+
+        self.write(poem.generate())
+
+class NgramsHandler(RequestHandler):
 
     def initialize(self, db):
         self.db = db
@@ -29,7 +41,8 @@ def main():
     client = pym.MongoClient(options.mongodb_url)
     db = client['shalk']
 
-    application = Application([(r"/ngrams/find", PoemHandler, dict(db=db)),])
+    application = Application([(r"/ngrams/find", NgramsHandler, dict(db=db)),
+                                (r"/poem/get", PoemHandler, dict(db=db))])
 
     application.listen(options.port, options.host)
     tornado.ioloop.IOLoop.instance().start()
