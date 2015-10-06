@@ -1,14 +1,20 @@
 from tornado.httpclient import HTTPClient
 import json
-from urllib import urlencode
 
 class Ngrams(object):
     FIND_URL = 'http://shalk-helderm.rhcloud.com/ngrams/find'
 
-    def __init__(self):
+    def __init__(self, db=None):
+        self.db = db
         self.cl = HTTPClient()
 
     def find(self, query, limit=30):
+
+        # if we have a db connection, use it!
+        if self.db:
+            cursor = self.db['ngrams'].find(query, {'_id':0}).limit(limit)
+            return list(cursor)
+
         body = { 'query': query,
                  'limit': limit }
 

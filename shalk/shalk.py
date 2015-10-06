@@ -14,7 +14,7 @@ class PoemHandler(RequestHandler):
 
     def get(self):
         pattern = ['*****', '*******', '*****']
-        poem = Poem(pattern)
+        poem = Poem(pattern, db=self.db)
 
         self.write(poem.generate())
 

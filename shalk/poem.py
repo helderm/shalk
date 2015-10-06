@@ -6,8 +6,8 @@ from ngrams import Ngrams
 
 
 class Poem():
-    def __init__(self, pattern):
-        self.ngrams = Ngrams()
+    def __init__(self, pattern, db=None):
+        self.ngrams = Ngrams(db)
         self.pattern = pattern
         self.template = pt.PoemTemplate(pattern, [])
 
