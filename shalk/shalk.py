@@ -19,14 +19,9 @@ class PoemHandler(RequestHandler):
         except ValueError:
             raise HTTPError(400)
 
-        cursor = self.db['ngrams'].find(jquery).limit(limit)
+        cursor = self.db['ngrams'].find(jquery, {'_id':0}).limit(limit)
 
-        res = []
-        for doc in cursor:
-            del doc['_id']
-            res.append(doc)
-
-        self.write(json.dumps(res))
+        self.write(json.dumps(list(cursor)))
 
 def main():
     define("host", default="127.0.0.1", help="Host IP")
