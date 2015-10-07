@@ -41,26 +41,35 @@ def main():
     if not base_data_dir:
         base_data_dir = '../data/'
 
-    # initialize cmu dict
-    nltk.data.path = [ '{0}nltk/'.format(base_data_dir) ]
-    cdict = cmudict.dict()
-
     files = [ '{0}ngrams/w2_.txt'.format(base_data_dir),
               '{0}ngrams/w3_.txt'.format(base_data_dir),
               '{0}ngrams/w4_.txt'.format(base_data_dir)]
 
     # run each file import in parallel
     num_cores = multiprocessing.cpu_count()
-    results = Parallel(n_jobs=len(files))(delayed(load_file_into_db)(db, datafile, cdict) for datafile in files)
+    results = Parallel(n_jobs=len(files))(delayed(load_file_into_db)(datafile) for datafile in files)
 
     #for datafile in files:
     #    load_file_into_db(db, datafile, cdict)
 
     print '* Database import finished!'
 
-def load_file_into_db(db, datafile, cdict):
+def load_file_into_db(datafile):
 
     print '* Importing file [{0}] into db...'.format(datafile)
+
+    # connect to db
+    mongodb_url = os.getenv('OPENSHIFT_MONGODB_DB_URL')
+    client = pym.MongoClient(mongodb_url)
+    db = client['shalk']
+
+    base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+    if not base_data_dir:
+        base_data_dir = '../data/'
+
+    # initialize cmu dict
+    nltk.data.path = [ '{0}nltk/'.format(base_data_dir) ]
+    cdict = cmudict.dict()
 
     count = 0
     mod = 10000
