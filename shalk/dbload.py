@@ -29,11 +29,11 @@ def main():
 
     #cleans the collection and create indexes
     db['ngrams'].drop()
-    db['ngrams'].create_index([( 'syllables', pymongo.ASCENDING ),
-                               ( 'word0', pymongo.ASCENDING ),
-                               ( 'word1', pymongo.ASCENDING ),
-                               ( 'word2', pymongo.ASCENDING ),
-                               ( 'word3', pymongo.ASCENDING )],
+    db['ngrams'].create_index([( 'syllables', pym.ASCENDING ),
+                               ( 'word0', pym.ASCENDING ),
+                               ( 'word1', pym.ASCENDING ),
+                               ( 'word2', pym.ASCENDING ),
+                               ( 'word3', pym.ASCENDING )],
                                sparse=True)
 
     # import files into db
