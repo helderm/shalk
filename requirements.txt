@@ -4,3 +4,4 @@ argparse
 pymongo
 nltk
 numpy
+joblib
