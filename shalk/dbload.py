@@ -6,6 +6,8 @@ import os, sys
 import nltk
 from nltk.corpus import cmudict
 from nltk.tag import pos_tag, map_tag
+from joblib import Parallel, delayed
+import multiprocessing
 
 EXP_DOC_COUNT = 1 * 1000 * 1000
 
@@ -27,28 +29,32 @@ def main():
 
     #cleans the collection and create indexes
     db['ngrams'].drop()
-    db['ngrams'].create_index([('word0', pym.ASCENDING)])
-    db['ngrams'].create_index([('word1', pym.ASCENDING)])
-    db['ngrams'].create_index([('word2', pym.ASCENDING)])
-    db['ngrams'].create_index([('word3', pym.ASCENDING)])
-    db['ngrams'].create_index([('syllables', pym.ASCENDING)])
-    db['ngrams'].create_index([('freq', pym.DESCENDING)])
+    db['ngrams'].create_index([( 'syllables', pymongo.ASCENDING ),
+                               ( 'word0', pymongo.ASCENDING ),
+                               ( 'word1', pymongo.ASCENDING ),
+                               ( 'word2', pymongo.ASCENDING ),
+                               ( 'word3', pymongo.ASCENDING )],
+                               sparse=True)
 
     # import files into db
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
     if not base_data_dir:
         base_data_dir = '../data/'
 
-    #
+    # initialize cmu dict
     nltk.data.path = [ '{0}nltk/'.format(base_data_dir) ]
     cdict = cmudict.dict()
 
     files = [ '{0}ngrams/w2_.txt'.format(base_data_dir),
               '{0}ngrams/w3_.txt'.format(base_data_dir),
-              '{0}ngrams/w4_.txt'.format(base_data_dir) ]
+              '{0}ngrams/w4_.txt'.format(base_data_dir)]
 
-    for datafile in files:
-        load_file_into_db(db, datafile, cdict)
+    # run each file import in parallel
+    num_cores = multiprocessing.cpu_count()
+    results = Parallel(n_jobs=len(files))(delayed(load_file_into_db)(db, datafile, cdict) for datafile in files)
+
+    #for datafile in files:
+    #    load_file_into_db(db, datafile, cdict)
 
     print '* Database import finished!'
 
