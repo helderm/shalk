@@ -28,7 +28,7 @@ def main():
 
     #cleans the collection and create indexes
     db['ngrams'].drop()
-    coll.create_index([( 'syllables', pym.ASCENDING ),
+    db['ngrams'].create_index([( 'syllables', pym.ASCENDING ),
                        ( 'word0', pym.ASCENDING ),
                        ( 'word1', pym.ASCENDING )])
 
