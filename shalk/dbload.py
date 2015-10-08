@@ -28,9 +28,11 @@ def main():
 
     #cleans the collection and create indexes
     db['ngrams'].drop()
-    db['ngrams'].create_index([( 'syllables', pym.ASCENDING ),
-                               ( 'word0', pym.ASCENDING ),
-                               ( 'word1', pym.ASCENDING )])
+    coll = pym.collection.Collection(database=db, name='ngrams', write_concern=pym.write_concern.WriteConcern(w=0))
+
+    coll.create_index([( 'syllables', pym.ASCENDING ),
+                       ( 'word0', pym.ASCENDING ),
+                       ( 'word1', pym.ASCENDING )])
 
     # import files into db
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
