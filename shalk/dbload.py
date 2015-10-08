@@ -28,8 +28,6 @@ def main():
 
     #cleans the collection and create indexes
     db['ngrams'].drop()
-    coll = pym.collection.Collection(database=db, name='ngrams', write_concern=pym.write_concern.WriteConcern(w=0))
-
     coll.create_index([( 'syllables', pym.ASCENDING ),
                        ( 'word0', pym.ASCENDING ),
                        ( 'word1', pym.ASCENDING )])
@@ -59,6 +57,7 @@ def load_file_into_db(datafile):
     mongodb_url = os.getenv('OPENSHIFT_MONGODB_DB_URL')
     client = pym.MongoClient(mongodb_url)
     db = client['shalk']
+    coll = pym.collection.Collection(database=db, name='ngrams', write_concern=pym.write_concern.WriteConcern(w=0))
 
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
     if not base_data_dir:
@@ -105,12 +104,12 @@ def load_file_into_db(datafile):
             if count % mod == 0:
                 print '- Inserted [{0}] ngrams into db...'.format(len(ngrams) * (count / mod))
                 sys.stdout.flush()
-                db['ngrams'].insert_many(ngrams)
+                coll.insert_many(ngrams)
                 ngrams = []
 
     print '- Inserting [{0}] ngrams into db...'.format(len(ngrams))
     sys.stdout.flush()
-    db['ngrams'].insert_many(ngrams)
+    coll.insert_many(ngrams)
 
     print '* Finished importing file [{0}]!'.format(datafile)
 
