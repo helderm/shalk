@@ -7,9 +7,8 @@ import nltk
 from nltk.corpus import cmudict
 from nltk.tag import pos_tag, map_tag
 from joblib import Parallel, delayed
-import multiprocessing
 
-EXP_DOC_COUNT = 1 * 1000 * 1000
+EXP_DOC_COUNT = 2 * 1000 * 1000
 
 def main():
 
@@ -31,10 +30,7 @@ def main():
     db['ngrams'].drop()
     db['ngrams'].create_index([( 'syllables', pym.ASCENDING ),
                                ( 'word0', pym.ASCENDING ),
-                               ( 'word1', pym.ASCENDING ),
-                               ( 'word2', pym.ASCENDING ),
-                               ( 'word3', pym.ASCENDING )],
-                               sparse=True)
+                               ( 'word1', pym.ASCENDING )])
 
     # import files into db
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
@@ -46,11 +42,7 @@ def main():
               '{0}ngrams/w4_.txt'.format(base_data_dir)]
 
     # run each file import in parallel
-    num_cores = multiprocessing.cpu_count()
     results = Parallel(n_jobs=len(files))(delayed(load_file_into_db)(datafile) for datafile in files)
-
-    #for datafile in files:
-    #    load_file_into_db(db, datafile, cdict)
 
     print '* Database import finished!'
 
