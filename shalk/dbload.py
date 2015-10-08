@@ -41,8 +41,11 @@ def main():
               '{0}ngrams/w3_.txt'.format(base_data_dir),
               '{0}ngrams/w4_.txt'.format(base_data_dir)]
 
+    #for df in files:
+    #    load_file_into_db(df)
+
     # run each file import in parallel
-    results = Parallel(n_jobs=len(files))(delayed(load_file_into_db)(datafile) for datafile in files)
+    Parallel(n_jobs=len(files))(delayed(load_file_into_db)(datafile) for datafile in files)
 
     print '* Database import finished!'
 
@@ -92,7 +95,7 @@ def load_file_into_db(datafile):
                 continue
 
             # add the type of the last word
-            wtype = get_last_word_types(line.rstrip().replace('\t', ' ').decode('utf-8', 'ignore'))
+            wtype = get_last_word_types(' '.join(parts[1:]))
             ngram['type'] = wtype
 
             ngrams.append(ngram)
