@@ -57,7 +57,8 @@ def load_file_into_db(datafile):
     mongodb_url = os.getenv('OPENSHIFT_MONGODB_DB_URL')
     client = pym.MongoClient(mongodb_url)
     db = client['shalk']
-    coll = pym.collection.Collection(database=db, name='ngrams', write_concern=pym.write_concern.WriteConcern(w=0))
+    coll = db['ngrams']
+    #coll = pym.collection.Collection(database=db, name='ngrams', write_concern=pym.write_concern.WriteConcern(w=0))
 
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
     if not base_data_dir:
