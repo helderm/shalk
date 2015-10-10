@@ -354,7 +354,7 @@ def get_rhyme(word, cdict):
     if word not in cdict:
         return None
 
-    phonemes = cdict[word]
+    phonemes = cdict[word][0]
     rhyme = ''
     for ph in reversed(phonemes):
         rhyme = '{0}{1}'.format(ph, rhyme)
