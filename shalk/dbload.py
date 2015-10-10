@@ -10,6 +10,7 @@ import argparse
 import traceback
 import time
 import random
+import re
 
 
 EXP_DOC_COUNT = 1 * 1000 * 1000
@@ -213,7 +214,7 @@ def fix_db():
     mod = 100
 
     # iterate over all docs that need fixing
-    orlist = [ {'syllables': { '$exists': False} }, {'rand': { '$exists': False} }, {'type': { '$exists': False} } ]
+    orlist = [ {'syllables': { '$exists': False} }, {'rand': { '$exists': False} }, {'type': { '$exists': False} }, {'rhyme': { '$exists': False} } ]
     ngrams = coll.find({ '$or': orlist })
     total = ngrams.count()
 
@@ -228,16 +229,16 @@ def fix_db():
             upngram = True
             ngram['rand'] = random.random()
         if 'rhyme' not in ngram:
-            #upngram = True
-            pass
+            upngram = True
+            ngram['rhyme'] = get_rhyme(lastword, cdict)
 
         if not upngram:
             count += 1
             continue
 
         update_ngram(ngram, coll)
-        upcount += 1
 
+        upcount += 1
         count += 1
         if count % mod == 0:
             print '- {0} out of {1} analysed! Docs updated: {2}'.format(count, total, upcount)
@@ -341,6 +342,26 @@ def count_syllables(word, cdict):
                 return 0
         else:
             return sum(l.isdigit() for s in cdict[word][0] for l in s)
+
+def get_rhyme(word, cdict):
+    phs = cdict[word]
+    if not phs:
+        return None
+
+    phonemes = phs[0]
+    rhyme = ''
+    for ph in reversed(phonemes):
+        rhyme = '{0}{1}'.format(ph, rhyme)
+        if contains_digits(ph):
+            break
+
+    if not len(rhyme):
+        return None
+
+    return rhyme
+
+def contains_digits(d):
+    return bool(re.search('\d', d))
 
 if __name__ == '__main__':
     main()
