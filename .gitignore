@@ -3,5 +3,4 @@ devenv
 *pyc
 build
 dist
-shalk/dbload.py
-data/nltk/corpora/cmudict/cmudict
+data/nltk
