@@ -1,5 +1,7 @@
 from tornado.httpclient import HTTPClient
 import json
+import random
+import pymongo as pym
 
 class Ngrams(object):
     FIND_URL = 'http://shalk-helderm.rhcloud.com/ngrams/find'
@@ -8,11 +10,17 @@ class Ngrams(object):
         self.db = db
         self.cl = HTTPClient()
 
-    def find(self, query, limit=30):
+    def find(self, query, limit=30, randorder=True):
+
+        if randorder and 'rand' not in query:
+            r = random.random()
+            op = '$lt' if r > 0.5 else '$gt'
+            query['rand'] = { op: r }
 
         # if we have a db connection, use it!
         if self.db:
-            cursor = self.db['ngrams'].find(query, {'_id':0}).limit(limit)
+            sortorder = random.choice([ pym.ASCENDING, pym.DESCENDING ])
+            cursor = self.db['ngrams'].find(query, {'_id':0}, ).limit(limit).sort('rand', sortorder)
             return list(cursor)
 
         body = { 'query': query,
@@ -22,8 +30,12 @@ class Ngrams(object):
         return json.loads(res.body)
 
 def main():
+    #client = pym.MongoClient()
+    #db = client['shalk']
+    #ngrams = Ngrams(db=db)
+
     ngrams = Ngrams()
-    res = ngrams.find({'word1': 'horse'})
+    res = ngrams.find({'word1': 'music'})
     print res
 
 if __name__ == '__main__':
