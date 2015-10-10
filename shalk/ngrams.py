@@ -14,12 +14,13 @@ class Ngrams(object):
 
         if randorder and 'rand' not in query:
             r = random.random()
-            op = '$lt' if r > 0.5 else '$gt'
+            op = random.choice(['$lt','$gt'])
             query['rand'] = { op: r }
 
         # if we have a db connection, use it!
         if self.db:
             sortorder = random.choice([ pym.ASCENDING, pym.DESCENDING ])
+
             cursor = self.db['ngrams'].find(query, {'_id':0}, ).limit(limit).sort('rand', sortorder)
             return list(cursor)
 
