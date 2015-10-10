@@ -12,10 +12,10 @@ class Ngrams(object):
 
     def find(self, query, limit=0, randorder=True):
 
-        if randorder and 'rand' not in query:
-            r = random.random()
-            op = random.choice(['$lt','$gt'])
-            query['rand'] = { op: r }
+        #if randorder and 'rand' not in query:
+        #    r = random.random()
+        #    op = random.choice(['$lt','$gt'])
+        #    query['rand'] = { op: r }
 
         # if we have a db connection, use it!
         if self.db:
@@ -27,7 +27,7 @@ class Ngrams(object):
         body = { 'query': query,
                  'limit': limit }
 
-        res = self.cl.fetch(Ngrams.FIND_URL, body=json.dumps(body), method='POST')
+        res = self.cl.fetch(Ngrams.FIND_URL, body=json.dumps(body), method='POST', request_timeout=0.0)
         return json.loads(res.body)
 
 def main():
