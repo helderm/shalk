@@ -270,6 +270,12 @@ def get_ngram(line, cdict):
         # add frequency
         ngram['freq'] = int(parts[0])
 
+        # add rhyme
+        ngram['rhyme'] = get_rhyme(get_last_word(ngram))
+
+        # add random number
+        ngram['rand'] = random.random()
+
         # add the type of the last word
         wtype = get_last_word_types(' '.join(parts[1:]))
         ngram['type'] = wtype
@@ -344,11 +350,11 @@ def count_syllables(word, cdict):
             return sum(l.isdigit() for s in cdict[word][0] for l in s)
 
 def get_rhyme(word, cdict):
-    phs = cdict[word]
-    if not phs:
+
+    if word not in cdict:
         return None
 
-    phonemes = phs[0]
+    phonemes = cdict[word]
     rhyme = ''
     for ph in reversed(phonemes):
         rhyme = '{0}{1}'.format(ph, rhyme)
