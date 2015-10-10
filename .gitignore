@@ -4,3 +4,4 @@ devenv
 build
 dist
 shalk/dbload.py
+data/nltk/corpora/cmudict/cmudict
