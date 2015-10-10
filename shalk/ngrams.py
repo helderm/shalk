@@ -10,7 +10,7 @@ class Ngrams(object):
         self.db = db
         self.cl = HTTPClient()
 
-    def find(self, query, limit=30, randorder=True):
+    def find(self, query, limit=0, randorder=True):
 
         if randorder and 'rand' not in query:
             r = random.random()
@@ -21,7 +21,7 @@ class Ngrams(object):
         if self.db:
             sortorder = random.choice([ pym.ASCENDING, pym.DESCENDING ])
 
-            cursor = self.db['ngrams'].find(query, {'_id':0}, ).limit(limit).sort('rand', sortorder)
+            cursor = self.db['ngrams'].find(query, {'_id':0}, ).sort('rand', sortorder).limit(limit)
             return list(cursor)
 
         body = { 'query': query,
