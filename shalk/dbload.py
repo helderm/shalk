@@ -9,22 +9,34 @@ from joblib import Parallel, delayed
 import argparse
 import traceback
 import time
+import random
 
 
 EXP_DOC_COUNT = 1 * 1000 * 1000
+args = None
 
 def main():
 
     # parse args
     parser = argparse.ArgumentParser(prog='dbload', description='Shalk database loading script')
-    parser.add_argument('-r', '--recover', help='Recover mode', action='store_true')
-    parser.add_argument('-f', '--force', help='Force the database loading. This will destroy the db and create one from scratch!!', action='store_true')
+    parser.add_argument('-m', '--mode', help='Script mode', choices=['recover', 'load', 'fix'], default='load')
+    parser.add_argument('-f', '--force', help='Force the database loading', action='store_true')
 
+    global args
     args = parser.parse_args()
 
-    if args.recover:
+    # execute recover db procedure
+    if args.mode == 'recover':
         recover_db()
         return
+    elif args.mode == 'fix':
+        fix_db()
+        return
+
+    load_db()
+
+
+def load_db():
 
     print '* Executing database import procedure...'
 
@@ -141,7 +153,7 @@ def recover_file_to_db(datafile):
     cdict = cmudict.dict()
 
     count = 0
-    mod = 1
+    mod = 1000
 
     # open file in reverse, and import it until we find the point where we stopped
     ngrams = []
@@ -153,9 +165,15 @@ def recover_file_to_db(datafile):
 
         # stop we find this ngram in the db already
         if coll.find_one(ngram):
-            print '- ({0}) Ngram [{1}] already in the db, stopping recovery!'
+            # if `force`, we will iterate over all docs, but will ignore the ones that are already inserted
+            if args.force:
+                print '- ({0}) Ngram [{1}] already in the db, jumping to the next one...'.format(filename, ngram)
+                sys.stdout.flush()
+                continue
+
+            print '- ({0}) Ngram [{1}] already in the db, stopping the recovery!'.format(filename, ngram)
             sys.stdout.flush()
-            return
+            break
 
         ngrams.append(ngram)
         count += 1
@@ -171,6 +189,62 @@ def recover_file_to_db(datafile):
     insert_ngrams(ngrams, coll)
 
     print '* Finished importing file [{0}]!'.format(filename)
+
+def fix_db():
+
+    print '* Executing database FIX procedure...'
+
+    # connect to db
+    mongodb_url = os.getenv('OPENSHIFT_MONGODB_DB_URL')
+    client = pym.MongoClient(mongodb_url)
+    db = client['shalk']
+    coll = db['ngrams']
+
+    base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+    if not base_data_dir:
+        base_data_dir = '../data/'
+
+    # initialize cmu dict
+    nltk.data.path = [ '{0}nltk/'.format(base_data_dir) ]
+    cdict = cmudict.dict()
+
+    count = 0
+    upcount = 0
+    mod = 100
+
+    # iterate over all docs that need fixing
+    orlist = [ {'syllables': { '$exists': False} }, {'rand': { '$exists': False} }, {'type': { '$exists': False} } ]
+    ngrams = coll.find({ '$or': orlist })
+    total = ngrams.count()
+
+    for ngram in ngrams:
+        upngram = False
+        lastword = get_last_word(ngram)
+
+        if 'syllables' not in ngram:
+            upngram = True
+            ngram['syllables'] = count_syllables(lastword, cdict)
+        if 'rand' not in ngram:
+            upngram = True
+            ngram['rand'] = random.random()
+        if 'rhyme' not in ngram:
+            #upngram = True
+            pass
+
+        if not upngram:
+            count += 1
+            continue
+
+        update_ngram(ngram, coll)
+        upcount += 1
+
+        count += 1
+        if count % mod == 0:
+            print '- {0} out of {1} analysed! Docs updated: {2}'.format(count, total, upcount)
+            sys.stdout.flush()
+
+
+    print '* Database FIX procedure finished!'
 
 def get_ngram(line, cdict):
     ngram = {}
@@ -188,7 +262,7 @@ def get_ngram(line, cdict):
             # added num syllables
             ngram['syllables'] = syllables
 
-            # add word
+            # add word1
             key = 'word{0}'.format(i)
             ngram[key] = word.decode('utf-8', 'ignore')
 
@@ -216,7 +290,7 @@ def insert_ngrams(ngrams, coll):
             coll.insert_many(ngrams)
             break
         except Exception as e:
-            print 'ERROR while inserting ngrams into db! Trying {0} more times...'.format(tries)
+            print 'ERROR while inserting ngrams {0} to {1} into db! Trying {2} more times...'.format(ngrams[0], ngrams[-1], tries)
             print traceback.format_exc()
             sys.stdout.flush()
             time.sleep(tries * 5)
@@ -226,13 +300,39 @@ def insert_ngrams(ngrams, coll):
         print 'ERROR while adding ngram from {0} to {1}'.format(ngrams[0], ngrams[-1])
         raise Exception('Failed to add ngrams!')
 
-def get_last_word_types(ngram):
-    text = nltk.word_tokenize(ngram)
+
+def update_ngram(ngram, coll):
+    tries = 5
+
+    while tries:
+        try:
+            coll.update({'_id': ngram['_id'] }, ngram)
+            break
+        except Exception as e:
+            print 'ERROR while updating ngram {0} to {1} into db! Trying {2} more times...'.format(ngram['_id'], ngram, tries)
+            print traceback.format_exc()
+            sys.stdout.flush()
+            time.sleep(tries * 5)
+            tries -= 1
+
+    if not tries:
+        print 'ERROR while adding ngram from {0} to {1}'.format(ngram['_id'], ngram)
+        raise Exception('Failed to update ngram!')
+
+
+def get_last_word_types(text):
+    text = nltk.word_tokenize(text)
     posTagged = pos_tag(text)
     lastword_tag = map_tag('en-ptb', 'universal', posTagged[-1][1])
 
+    # known types
+    # ['NOUN','VERB','CONJ','PRON','ADP', 'PRT', 'DET']
     return lastword_tag
 
+def get_last_word(ngram):
+    words = [ k for k in ngram.keys() if k.find('word') == 0 ]
+    words.sort()
+    return ngram[words[-1]]
 
 def count_syllables(word, cdict):
         word = word.lower()
