@@ -4,8 +4,10 @@ import json
 import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import Application, RequestHandler, HTTPError
+import random
 
 from poem import Poem
+from ngrams import Ngrams
 
 class PoemHandler(RequestHandler):
 
@@ -28,8 +30,9 @@ class NgramsHandler(RequestHandler):
         query = body['query']
         limit = body['limit']
 
-        cursor = self.db['ngrams'].find(query, {'_id':0}).limit(limit)
-        self.write(json.dumps(list(cursor)))
+        ngrams = Ngrams(db=self.db)
+        res = ngrams.find(query=query, limit=limit)
+        self.write(json.dumps(res))
 
 def main():
     define("host", default="127.0.0.1", help="Host IP")
