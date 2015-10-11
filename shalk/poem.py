@@ -12,13 +12,25 @@ class Poem():
         self.template = pt.PoemTemplate(pattern, [])
 
     def generate(self):
+        print "HOT NEW POEM COMING RIGHT UP:"
         template = self.template.createTemplate()
 
         syllables = [ i for x in template for i in x ]
 
         text = ''
+        sylSum = 0
+        currentLine = 0
+        currentLineText = ''
         for syl in syllables:
-            text += self.nextWord(text, syl) + " "
+            newestWord = self.nextWord(text, syl)
+            text += newestWord  + " "
+            currentLineText += newestWord  + " "
+            sylSum += syl
+            if(sylSum == len(self.pattern[currentLine])):                
+                print currentLineText
+                currentLine += 1
+                sylSum = 0
+                currentLineText = ''
         return text
 
     def weightedChoice(self, choices):
@@ -92,7 +104,7 @@ class Poem():
 def main():
     p = Poem(['*****', '*******', '*****'])
     for x in range(0, 50):
-        print p.generate()
+        p.generate()
     
 
 
