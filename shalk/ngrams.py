@@ -10,7 +10,7 @@ class Ngrams(object):
         self.db = db
         self.cl = HTTPClient()
 
-    def find(self, query, limit=0, randorder=True):
+    def find(self, query, n, limit=0, randorder=True):
 
         #if randorder and 'rand' not in query:
         #    r = random.random()
@@ -21,14 +21,17 @@ class Ngrams(object):
         if self.db:
             sortorder = random.choice([ pym.ASCENDING, pym.DESCENDING ])
 
-            cursor = self.db['ngrams'].find(query, {'_id':0, 'rand': 0}).sort('rand', sortorder).limit(limit)
+            coll = 'n{0}grams'.format(n)
+            cursor = self.db[coll].find(query, {'_id':0, 'rand': 0}).sort('rand', sortorder).limit(limit)
             return list(cursor)
 
         body = { 'query': query,
+                 'n': n,
                  'limit': limit }
 
         res = self.cl.fetch(Ngrams.FIND_URL, body=json.dumps(body), method='POST', request_timeout=0.0)
         return json.loads(res.body)
+
 
 def main():
     #client = pym.MongoClient()
