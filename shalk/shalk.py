@@ -28,10 +28,11 @@ class NgramsHandler(RequestHandler):
     def post(self):
         body = json.loads(self.request.body)
         query = body['query']
+        n = body['n']
         limit = body['limit']
 
         ngrams = Ngrams(db=self.db)
-        res = ngrams.find(query=query, limit=limit)
+        res = ngrams.find(query=query, n=n, limit=limit)
         self.write(json.dumps(res))
 
 def main():
