@@ -26,7 +26,7 @@ class Poem():
             text += newestWord  + " "
             currentLineText += newestWord  + " "
             sylSum += syl
-            if(sylSum == len(self.pattern[currentLine])):                
+            if(sylSum == len(self.pattern[currentLine])):
                 print currentLineText
                 currentLine += 1
                 sylSum = 0
@@ -52,7 +52,7 @@ class Poem():
             tuple.append(multiplier * item[u'freq'])
             tuples.append(tuple)
         return tuples
-    
+
     def smoothedGeneration(self, method, syl, unigrams, bigrams=[], trigrams=[], fourgrams=[]):
         if method == 'linear':
             multiplierUnigrams = 1
@@ -76,7 +76,7 @@ class Poem():
                 return self.weightedChoice(tuples2)
             tuples1 = self.weightedTuples(unigrams, u'word1', syl)
             return self.weightedChoice(tuples1)
-                
+
 
     #This is our ngram generating function.
     def nextWord(self, text, syl):
@@ -86,10 +86,12 @@ class Poem():
         N = len(words)
         smoothing = 'backoff'
         unigrams = self.ngrams.find({"syllables" : syl, "word2": {"$exists" : False}}, limit = 10   )
+
         if(N<=1):
             choice = self.smoothedGeneration(smoothing, syl, unigrams)
             return choice
         bigrams = self.ngrams.find({"word0" : words[N-1], "syllables" : syl, "word2": {"$exists" : False}}, limit = 10)
+
         if(N<=2):
             choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams)
             return choice
@@ -99,13 +101,14 @@ class Poem():
             return choice
         fourgrams = self.ngrams.find({"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : syl, "word3": {"$exists" : True}}, limit = 10)
         choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams, trigrams, fourgrams)
+
         return choice
 
 def main():
     p = Poem(['*****', '*******', '*****'])
     for x in range(0, 50):
         p.generate()
-    
+
 
 
 if __name__ == "__main__":

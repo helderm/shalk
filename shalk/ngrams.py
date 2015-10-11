@@ -21,7 +21,7 @@ class Ngrams(object):
         if self.db:
             sortorder = random.choice([ pym.ASCENDING, pym.DESCENDING ])
 
-            cursor = self.db['ngrams'].find(query, {'_id':0}).sort('rand', sortorder).limit(limit)
+            cursor = self.db['ngrams'].find(query, {'_id':0, 'rand': 0}).sort('rand', sortorder).limit(limit)
             return list(cursor)
 
         body = { 'query': query,
