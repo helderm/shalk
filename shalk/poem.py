@@ -40,37 +40,54 @@ class Poem():
             tuple.append(multiplier * item[u'freq'])
             tuples.append(tuple)
         return tuples
+    
+    def smoothedGeneration(self, method, syl, unigrams, bigrams=[], trigrams=[], fourgrams=[]):
+        if method == 'linear':
+            multiplierUnigrams = 1
+            multiplierBigrams = 50
+            multiplerTrigrams = 200
+            multiplierFourgrams = 1000
+            tuples1 = self.weightedTuples(unigrams, u'word1', syl, multiplierUnigrams)
+            tuples2 = self.weightedTuples(bigrams, u'word1', syl, multiplierBigrams)
+            tuples3 = self.weightedTuples(trigrams, u'word2', syl, multiplerTrigrams)
+            tuples4 = self.weightedTuples(fourgrams, u'word3', syl, multiplierFourgrams)
+            return self.weightedChoice(tuples1+tuples2+tuples3+tuples4)
+        if method == 'backoff':
+            if(len(fourgrams) > 0):
+                tuples4 = self.weightedTuples(fourgrams, u'word3', syl)
+                return self.weightedChoice(tuples4)
+            if(len(trigrams) > 0):
+                tuples3 = self.weightedTuples(trigrams, u'word2', syl)
+                return self.weightedChoice(tuples3)
+            if(len(bigrams) > 0):
+                tuples2 = self.weightedTuples(bigrams, u'word1', syl)
+                return self.weightedChoice(tuples2)
+            tuples1 = self.weightedTuples(unigrams, u'word1', syl)
+            return self.weightedChoice(tuples1)
+                
 
     #This is our ngram generating function.
     def nextWord(self, text, syl):
         #Constants for the smoothing
-        multiplierUnigrams = 1
-        multiplierBigrams = 50
-        multiplerTrigrams = 200
-        multiplierFourgrams = 1000
         text = text[0:len(text)-1]
         words = text.split(" ")
         N = len(words)
-        possible1grams = self.ngrams.find({"syllables" : syl, "word2": {"$exists" : False}}, limit = 9999)
-        tuples1 = self.weightedTuples(possible1grams, u'word1', syl, multiplierUnigrams)
+        smoothing = 'backoff'
+        unigrams = self.ngrams.find({"syllables" : syl, "word2": {"$exists" : False}}, limit = 10   )
         if(N<=1):
-            choice = self.weightedChoice(tuples1)
+            choice = self.smoothedGeneration(smoothing, syl, unigrams)
             return choice
-        possible2grams = self.ngrams.find({"word0" : words[N-1], "syllables" : syl, "word2": {"$exists" : False}}, limit = 9999)
-        tuples2 = self.weightedTuples(possible2grams, u'word1', syl, multiplierBigrams)
+        bigrams = self.ngrams.find({"word0" : words[N-1], "syllables" : syl, "word2": {"$exists" : False}}, limit = 10)
         if(N<=2):
-            choice = self.weightedChoice(tuples1 + tuples2)
+            choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams)
             return choice
-        possible3grams = self.ngrams.find({"word0" : words[N-2], "word1" : words[N-1], "syllables" : syl, "word2": {"$exists" : True}, "word3": {"$exists" : False}}, limit = 9999)
-        tuples3 = self.weightedTuples(possible3grams, u'word2', syl, multiplerTrigrams)
+        trigrams = self.ngrams.find({"word0" : words[N-2], "word1" : words[N-1], "syllables" : syl, "word2": {"$exists" : True}, "word3": {"$exists" : False}}, limit = 10)
         if(N<=3):
-            choice = self.weightedChoice(tuples1+tuples2+tuples3)
+            choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams, trigrams)
             return choice
-        possible4grams = self.ngrams.find({"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : syl, "word3": {"$exists" : True}}, limit = 9999)
-        tuples4 = self.weightedTuples(possible4grams, u'word3', syl, multiplierFourgrams)
-        choice = self.weightedChoice(tuples1+tuples2+tuples3+tuples4)
+        fourgrams = self.ngrams.find({"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : syl, "word3": {"$exists" : True}}, limit = 10)
+        choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams, trigrams, fourgrams)
         return choice
-        #If we've reached this point, everything failed:
 
 def main():
     p = Poem(['*****', '*******', '*****'])
