@@ -22,7 +22,7 @@ class Ngrams(object):
             sortorder = random.choice([ pym.ASCENDING, pym.DESCENDING ])
 
             coll = 'n{0}grams'.format(n)
-            cursor = self.db[coll].find(query, {'_id':0, 'rand': 0}).sort('rand', sortorder).limit(limit)
+            cursor = self.db[coll].find(query, {'_id':0, 'rand': 0, 'type': 0, 'syllables': 0}).sort('rand', sortorder).limit(limit)
             return list(cursor)
 
         body = { 'query': query,
