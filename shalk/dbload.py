@@ -22,6 +22,7 @@ def main():
     parser = argparse.ArgumentParser(prog='dbload', description='Shalk database loading script')
     parser.add_argument('-m', '--mode', help='Script mode', choices=['recover', 'load', 'fix'], default='load')
     parser.add_argument('-f', '--force', help='Force the database loading', action='store_true')
+    parser.add_argument('-s', '--split', help='Split the ngrams into different collections', action='store_true')
 
     global args
     args = parser.parse_args()
@@ -54,10 +55,7 @@ def load_db():
         return
 
     #cleans the collection and create indexes
-    db['ngrams'].drop()
-    db['ngrams'].create_index([( 'syllables', pym.ASCENDING ),
-                       ( 'word0', pym.ASCENDING ),
-                       ( 'word1', pym.ASCENDING )])
+    create_collections(db)
 
     # import files into db
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
@@ -85,7 +83,6 @@ def load_file_into_db(datafile):
     mongodb_url = os.getenv('OPENSHIFT_MONGODB_DB_URL')
     client = pym.MongoClient(mongodb_url)
     db = client['shalk']
-    coll = db['ngrams']
 
     base_data_dir = os.getenv('OPENSHIFT_DATA_DIR')
     if not base_data_dir:
@@ -110,12 +107,12 @@ def load_file_into_db(datafile):
             if count % mod == 0:
                 print '- ({0}) Inserted [{1}] ngrams into db...'.format(filename, len(ngrams) * (count / mod))
                 sys.stdout.flush()
-                insert_ngrams(ngrams, coll)
+                insert_ngrams(ngrams, db)
                 ngrams = []
 
     print '- ({0}) Inserting last [{1}] ngrams into db...'.format(filename, len(ngrams))
     sys.stdout.flush()
-    insert_ngrams(ngrams, coll)
+    insert_ngrams(ngrams, db)
 
     print '* Finished importing file [{0}]!'.format(filename)
 
@@ -165,7 +162,7 @@ def recover_file_to_db(datafile):
             continue
 
         # stop we find this ngram in the db already
-        if coll.find_one(ngram):
+        if find_one(ngram, db):
             # if `force`, we will iterate over all docs, but will ignore the ones that are already inserted
             if args.force:
                 print '- ({0}) Ngram [{1}] already in the db, jumping to the next one...'.format(filename, ngram)
@@ -182,12 +179,12 @@ def recover_file_to_db(datafile):
             print '- ({0}) Inserted [{1}] ngrams into db...'.format(filename, len(ngrams) * (count / mod))
             print '- ({0}) {1} -> {2}'.format(filename, ngrams[0], ngrams[-1])
             sys.stdout.flush()
-            insert_ngrams(ngrams, coll)
+            insert_ngrams(ngrams, db)
             ngrams = []
 
     print '- ({0}) Inserting last [{1}] ngrams into db...'.format(filename, len(ngrams))
     sys.stdout.flush()
-    insert_ngrams(ngrams, coll)
+    insert_ngrams(ngrams, db)
 
     print '* Finished importing file [{0}]!'.format(filename)
 
@@ -236,7 +233,7 @@ def fix_db():
             count += 1
             continue
 
-        update_ngram(ngram, coll)
+        update_ngram(ngram, db)
 
         upcount += 1
         count += 1
@@ -271,7 +268,7 @@ def get_ngram(line, cdict):
         ngram['freq'] = int(parts[0])
 
         # add rhyme
-        ngram['rhyme'] = get_rhyme(get_last_word(ngram))
+        ngram['rhyme'] = get_rhyme(get_last_word(ngram), cdict)
 
         # add random number
         ngram['rand'] = random.random()
@@ -289,8 +286,10 @@ def get_ngram(line, cdict):
     return ngram
 
 
-def insert_ngrams(ngrams, coll):
+def insert_ngrams(ngrams, db):
     tries = 5
+
+    coll = get_collection(ngrams[0], db)
 
     while tries:
         try:
@@ -308,8 +307,10 @@ def insert_ngrams(ngrams, coll):
         raise Exception('Failed to add ngrams!')
 
 
-def update_ngram(ngram, coll):
+def update_ngram(ngram, db):
     tries = 5
+
+    coll = get_collection(ngram, db)
 
     while tries:
         try:
@@ -325,6 +326,45 @@ def update_ngram(ngram, coll):
     if not tries:
         print 'ERROR while adding ngram from {0} to {1}'.format(ngram['_id'], ngram)
         raise Exception('Failed to update ngram!')
+
+def create_collections(db):
+
+    if not args.split:
+        db['ngrams'].drop()
+        db['ngrams'].create_index([( 'syllables', pym.ASCENDING ),
+                                   ( 'word0', pym.ASCENDING ),
+                                   ( 'word1', pym.ASCENDING )])
+        return
+
+    # create the split collections
+    for i in range(2, 5):
+        coll = 'n{0}grams'.format(i)
+        db[coll].drop()
+
+        idx = [( 'syllables', pym.ASCENDING ),
+               ( 'word0', pym.ASCENDING ),
+               ( 'word1', pym.ASCENDING ) ]
+
+        if i >= 3:
+            idx.append(( 'word2', pym.ASCENDING ))
+        if i >= 4:
+            idx.append(( 'word3', pym.ASCENDING ))
+
+        db[coll].create_index(idx)
+
+def find_one(ngram, db):
+    coll = get_collection(ngram)
+    return db[coll].find_one(ngram)
+
+def get_collection(ngram, db):
+    if not args.split:
+        return db['ngrams']
+
+    if 'word3' in ngram:
+        return db['n4grams']
+    if 'word2' in ngram:
+        return db['n3grams']
+    return db['n2grams']
 
 
 def get_last_word_types(text):

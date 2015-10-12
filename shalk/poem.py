@@ -3,6 +3,7 @@ import random
 import pymongo as pym
 import PoemTemplate as pt
 from ngrams import Ngrams
+from rhyme import RhymeScheme
 from random import randint
 
 
@@ -84,28 +85,28 @@ class Poem():
             self.rs = 'ABABCDCDEFEFGG'
                 
         self.template = pt.PoemTemplate(self.pattern, self.rs)
-        
-        
+        self.rhymesch = RhymeScheme(self.rs)
+     
 
     def generate(self):
         print "HOT NEW POEM COMING RIGHT UP:"
         template = self.template.createTemplate()
 
-        syllables = [ i for x in template for i in x ]
+        constraints = [ i for x in template for i in x ]
 
         text = ''
         sylSum = 0
         currentLine = 0
         currentLineText = ''
-        tuples = [(2, 'NOUN'), (1, 'VERB'), (2, 'NOUN'), (3, 'ADV'), (1, 'VERB'), (3, 'NOUN'), (2, 'NOUN'), (1, 'VERB'), (2, 'NOUN')]
-        #DEVELOPMENT CHANGE:
-        #for syl in syllables:
-        for tuple in tuples:
-            newestWord = self.nextWord(text, tuple)
+        for con in constraints:
+
+            eol = (sylSum == len(self.pattern[currentLine]))
+
+            newestWord = self.nextWord(text, con, eol)
             text += newestWord  + " "
             currentLineText += newestWord  + " "
-            sylSum += tuple[0]
-            if(sylSum == len(self.pattern[currentLine])):                
+            sylSum += con[0]
+            if(sylSum == len(self.pattern[currentLine])):
                 print currentLineText
                 currentLine += 1
                 sylSum = 0
@@ -113,12 +114,12 @@ class Poem():
         return text
 
     def weightedChoice(self, choices):
-        total = sum(w for c, w in choices)
+        total = sum(w for c, w, rhyme in choices)
         r = random.uniform(0, total)
         upto = 0
-        for c, w in choices:
+        for c, w, rhyme in choices:
             if upto + w > r:
-                return c
+                return c, rhyme
             upto += w
         assert False, "Shouldn't get here"
 
@@ -129,9 +130,10 @@ class Poem():
             tuple = []
             tuple.append(item[key])
             tuple.append(multiplier * item[u'freq'])
+            tuple.append(item['rhyme'])
             tuples.append(tuple)
         return tuples
-    
+
     def smoothedGeneration(self, method, syl, unigrams, bigrams=[], trigrams=[], fourgrams=[]):
         if method == 'linear':
             multiplierUnigrams = 1
@@ -155,36 +157,79 @@ class Poem():
                 return self.weightedChoice(tuples2)
             tuples1 = self.weightedTuples(unigrams, u'word1', syl)
             return self.weightedChoice(tuples1)
-                
+
 
     #This is our ngram generating function.
-    def nextWord(self, text, tuple):
+
+    def nextWord(self, text, con, eol):
         #Constants for the smoothing
+		#TODO: Catch the 'X' part of speech case
         text = text[0:len(text)-1]
         words = text.split(" ")
         N = len(words)
         smoothing = 'backoff'
-        unigrams = self.ngrams.find({"syllables" : tuple[0], "type" : tuple[1], "word2": {"$exists" : False}}, limit = 10   )
+        rhyming = False
+        query = {}
+
+        # if end of line, we need to add the rhyme constraint to the queries
+        if eol and self.rhymesch:
+            rhyming = True
+            rhyme = self.rhymesch.get_curr_rhyme()
+            if rhyme:
+                query['rhyme'] = rhyme
+
+        query = {"syllables" : con[0], "type" : con[1]}
+        if rhyming and rhyme:
+            query['rhyme'] = rhyme
+
+        unigrams = self.ngrams.find(query, n=2, limit = 10 )
+
         if(N<=1):
-            choice = self.smoothedGeneration(smoothing, tuple[0], unigrams)
+            choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams)
+            if rhyming and not rhyme:
+                self.rhymesch.add_rhyme(rh)
             return choice
-        bigrams = self.ngrams.find({"word0" : words[N-1], "syllables" : tuple[0], "type" : tuple[1], "word2": {"$exists" : False}}, limit = 10)
+
+        query = {"word0" : words[N-1], "syllables" : con[0], "type" : con[1]}
+        if rhyming and rhyme:
+            query['rhyme'] = rhyme
+
+        bigrams = self.ngrams.find(query, n=2, limit = 10)
+
         if(N<=2):
-            choice = self.smoothedGeneration(smoothing, tuple[0], unigrams, bigrams)
+            choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams)
+            if rhyming and not rhyme:
+                self.rhymesch.add_rhyme(rh)
             return choice
-        trigrams = self.ngrams.find({"word0" : words[N-2], "word1" : words[N-1], "syllables" : tuple[0], "type" : tuple[1], "word2": {"$exists" : True}, "word3": {"$exists" : False}}, limit = 10)
+
+        query = {"word0" : words[N-2], "word1" : words[N-1], "syllables" : con[0], "type" : con[1] }
+        if rhyming and rhyme:
+            query['rhyme'] = rhyme
+
+        trigrams = self.ngrams.find(query, n=3, limit = 10)
         if(N<=3):
-            choice = self.smoothedGeneration(smoothing, tuple[0], unigrams, bigrams, trigrams)
+            choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams, trigrams)
+            if rhyming and not rhyme:
+                self.rhymesch.add_rhyme(rh)
             return choice
-        fourgrams = self.ngrams.find({"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : tuple[0], "type" : tuple[1], "word3": {"$exists" : True}}, limit = 10)
-        choice = self.smoothedGeneration(smoothing, tuple[0], unigrams, bigrams, trigrams, fourgrams)
+
+        query = {"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : con[0], "type" : con[1]}
+        if rhyming and rhyme:
+            query['rhyme'] = rhyme
+
+        fourgrams = self.ngrams.find(query, n=4, limit = 10)
+        choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams, trigrams, fourgrams)
+
+        if rhyming and not rhyme:
+            self.rhymesch.add_rhyme(rh)
         return choice
+
 
 def main():
     p = Poem('haiku')
     for x in range(0, 20):
         p.generate()
-    
+
 
 
 if __name__ == "__main__":

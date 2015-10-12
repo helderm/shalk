@@ -1,8 +1,8 @@
 #!/bin/bash
-VIRTENV_HOME=$OPENSHIFT_DEPENDENCIES_DIR/virtualenv/
-source $VIRTENV_HOME/bin/activate
+#VIRTENV_HOME=$OPENSHIFT_DEPENDENCIES_DIR/virtualenv/
+#source $VIRTENV_HOME/bin/activate
 
 #load database if needed
 #nohup dbload  > ${OPENSHIFT_DIY_LOG_DIR}/shalk.log 2>&1 &
-dbload |& /usr/bin/logshifter -tag shalk &
+#dbload |& /usr/bin/logshifter -tag shalk &
 
