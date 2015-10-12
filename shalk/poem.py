@@ -224,7 +224,6 @@ class Poem():
             self.rhymesch.add_rhyme(rh)
         return choice
 
-
 def main():
     p = Poem('haiku')
     for x in range(0, 20):
