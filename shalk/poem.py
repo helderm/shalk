@@ -3,13 +3,89 @@ import random
 import pymongo as pym
 import PoemTemplate as pt
 from ngrams import Ngrams
+from random import randint
 
 
 class Poem():
-    def __init__(self, pattern, db=None):
+    def __init__(self, type, db=None):
         self.ngrams = Ngrams(db)
-        self.pattern = pattern
-        self.template = pt.PoemTemplate(pattern, [])
+        
+        if type == 'haiku':
+            self.pattern = ['*****', '*******', '*****']
+            self.rs = '***'
+            
+        if type == 'tanka':
+            self.pattern = ['*****', '*******', '*****', '*******', '*******']
+            self.rs = '*****'
+            
+        if type == 'limerick':
+            self.pattern = []
+            self.rs = 'AABBA'
+            lengths = []
+            lengths.append(randint(8, 11))
+            lengths.append(randint(8, 11))
+            lengths.append(randint(5, 7))
+            lengths.append(randint(5, 7))
+            lengths.append(randint(8, 11))
+            for length in lengths:
+                self.pattern.append('*' * length)
+                
+        if type == 'quatrain':
+            mean = randint(5, 12)
+            lengths = []
+            for x in range(0, 3):
+                lengths.append(randint(mean-1, mean+1))
+            for length in lengths:
+                self.pattern.append('*' * length)
+            #What we're doing now is giving the AAAA rhyme scene a 1/5 chance of happening
+            p = randint(0,3)
+            if p == 0:
+                self.rs = 'AAAA'
+            if p == 1:
+                self.rs = 'AABB'
+            if p == 2:
+                self.rs = 'ABAB'
+            if p == 3:
+                self.rs = 'ABBA'
+        if type == 'spenserian sonnet':
+            mean = randint(7, 12)
+            lengths = []
+            for x in range(0, 13):
+                lengths.append(randint(mean-1, mean+1))
+            for length in lengths:
+                self.pattern.append('*' * length)
+            self.rs = 'ABABBCBCCDCDEE'
+        if type == 'italian sonnet':
+            mean = randint(7, 12)
+            lengths = []
+            for x in range(0, 13):
+                lengths.append(randint(mean-1, mean+1))
+            for length in lengths:
+                self.pattern.append('*' * length)
+            octave = 'ABBAABA'
+            sestet = ''
+            p = randint(0,3)
+            if p == 0:
+                sestet = 'CDCDCD'
+            if p == 1:
+                sestet= 'CDDCDC'
+            if p == 2:
+                sestet = 'CDECDE'
+            if p == 3:
+                sestet = 'CDECED'
+            self.rs = octave + sestet
+        if type == 'shakespearian sonnet':
+            mean = randint(7, 12)
+            lengths = []
+            for x in range(0, 13):
+                lengths.append(randint(mean-1, mean+1))
+            for length in lengths:
+                self.pattern.append('*' * length)
+            self.rs = 'ABABCDCDEFEFGG'
+                
+        self.template = pt.PoemTemplate(self.pattern, self.rs)
+        
+        
 
     def generate(self):
         print "HOT NEW POEM COMING RIGHT UP:"
@@ -21,11 +97,14 @@ class Poem():
         sylSum = 0
         currentLine = 0
         currentLineText = ''
-        for syl in syllables:
-            newestWord = self.nextWord(text, syl)
+        tuples = [(2, 'NOUN'), (1, 'VERB'), (2, 'NOUN'), (3, 'ADV'), (1, 'VERB'), (3, 'NOUN'), (2, 'NOUN'), (1, 'VERB'), (2, 'NOUN')]
+        #DEVELOPMENT CHANGE:
+        #for syl in syllables:
+        for tuple in tuples:
+            newestWord = self.nextWord(text, tuple)
             text += newestWord  + " "
             currentLineText += newestWord  + " "
-            sylSum += syl
+            sylSum += tuple[0]
             if(sylSum == len(self.pattern[currentLine])):                
                 print currentLineText
                 currentLine += 1
@@ -79,31 +158,31 @@ class Poem():
                 
 
     #This is our ngram generating function.
-    def nextWord(self, text, syl):
+    def nextWord(self, text, tuple):
         #Constants for the smoothing
         text = text[0:len(text)-1]
         words = text.split(" ")
         N = len(words)
         smoothing = 'backoff'
-        unigrams = self.ngrams.find({"syllables" : syl, "word2": {"$exists" : False}}, limit = 10   )
+        unigrams = self.ngrams.find({"syllables" : tuple[0], "type" : tuple[1], "word2": {"$exists" : False}}, limit = 10   )
         if(N<=1):
-            choice = self.smoothedGeneration(smoothing, syl, unigrams)
+            choice = self.smoothedGeneration(smoothing, tuple[0], unigrams)
             return choice
-        bigrams = self.ngrams.find({"word0" : words[N-1], "syllables" : syl, "word2": {"$exists" : False}}, limit = 10)
+        bigrams = self.ngrams.find({"word0" : words[N-1], "syllables" : tuple[0], "type" : tuple[1], "word2": {"$exists" : False}}, limit = 10)
         if(N<=2):
-            choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams)
+            choice = self.smoothedGeneration(smoothing, tuple[0], unigrams, bigrams)
             return choice
-        trigrams = self.ngrams.find({"word0" : words[N-2], "word1" : words[N-1], "syllables" : syl, "word2": {"$exists" : True}, "word3": {"$exists" : False}}, limit = 10)
+        trigrams = self.ngrams.find({"word0" : words[N-2], "word1" : words[N-1], "syllables" : tuple[0], "type" : tuple[1], "word2": {"$exists" : True}, "word3": {"$exists" : False}}, limit = 10)
         if(N<=3):
-            choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams, trigrams)
+            choice = self.smoothedGeneration(smoothing, tuple[0], unigrams, bigrams, trigrams)
             return choice
-        fourgrams = self.ngrams.find({"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : syl, "word3": {"$exists" : True}}, limit = 10)
-        choice = self.smoothedGeneration(smoothing, syl, unigrams, bigrams, trigrams, fourgrams)
+        fourgrams = self.ngrams.find({"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : tuple[0], "type" : tuple[1], "word3": {"$exists" : True}}, limit = 10)
+        choice = self.smoothedGeneration(smoothing, tuple[0], unigrams, bigrams, trigrams, fourgrams)
         return choice
 
 def main():
-    p = Poem(['*****', '*******', '*****'])
-    for x in range(0, 50):
+    p = Poem('haiku')
+    for x in range(0, 20):
         p.generate()
     
 
