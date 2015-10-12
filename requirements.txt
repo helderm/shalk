@@ -5,3 +5,4 @@ pymongo
 nltk
 numpy
 joblib
+scipy
