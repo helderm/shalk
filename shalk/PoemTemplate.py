@@ -47,7 +47,6 @@ class PoemTemplate:
             for w in l:
                 word_count = word_count + 1
 
-        print(word_count)
         all_sents = []
         all_len = []
         while word_count > 0:
@@ -67,11 +66,9 @@ class PoemTemplate:
                 choice = random.choice(possible_choices)
                 all_len[choice] = all_len[choice] - 1
 
-        print(all_len)
 
         for i in range(len(all_len)):
            all_sents.append(random.choice(self.grammar[all_len[i]]))
-        print(all_sents)
 
         all_sents = [i for sl in all_sents for i in sl]
 
