@@ -19,6 +19,9 @@ class RhymeScheme(object):
         rtype = self.pattern[self.curr_rhyme]
 
         self.curr_rhyme += 1
+        if self.curr_rhyme >= len(self.pattern):
+            self.curr_rhyme = 0
+
         return self.rhymes.get(rtype, None)
 
 

@@ -23,15 +23,15 @@ class Poem():
         sylSum = 0
         currentLine = 0
         currentLineText = ''
+
         for syl in syllables:
-
-            eol = (sylSum == len(self.pattern[currentLine]))
-
+            eol = (sylSum == ( len(self.pattern[currentLine]) - template[currentLine][-1] ) )
             newestWord = self.nextWord(text, syl, eol)
             text += newestWord  + " "
             currentLineText += newestWord  + " "
             sylSum += syl
-            if eol:
+
+            if(sylSum == len(self.pattern[currentLine])):
                 print currentLineText
                 currentLine += 1
                 sylSum = 0
@@ -148,9 +148,8 @@ class Poem():
 
         return choice
 
-
 def main():
-    p = Poem(['*****', '*******', '*****', '*****', '*******', '*****'], rhymesch='ABBA')
+    p = Poem(['*****', '*******', '*****'], rhymesch='ABA')
     for x in range(0, 50):
         p.generate()
 
