@@ -1,7 +1,7 @@
 import numpy as np
 import pickle
-import scipy.stats as stats
 import random
+
 
 
 class PoemTemplate:
@@ -13,8 +13,8 @@ class PoemTemplate:
         You can also passed predefined types of poems (TODO: add more).
     """
     haiku = ['*****', '*******', '*****']
-    averageSyllablesPerWord = 2;
-    standardDerivation = 1;
+    averageSyllablesPerWord = 1.5;
+    standardDerivation = 0.5;
 
     def __init__(self, mP, rS):
         self.grammar = pickle.load(open("grammar", "rb"))
@@ -54,9 +54,15 @@ class PoemTemplate:
             partition = sum(self.grammarDistribution)
             normalized_distribution = [float(x) / partition for x in self.grammarDistribution]
 
-            dis = stats.rv_discrete(name='dis', values=(range(len(self.grammarDistribution)), normalized_distribution))
-            sentence_length = dis.rvs(size=1)
-            all_len.append(sentence_length[0])
+
+            p = random.random()
+            sentence_length = 0
+            sum_p = 0
+            while sum_p < p:
+                sum_p = sum_p + normalized_distribution[sentence_length]
+                sentence_length = sentence_length + 1
+
+            all_len.append(sentence_length)
 
             word_count = word_count - sentence_length
 
@@ -65,7 +71,6 @@ class PoemTemplate:
                 possible_choices = np.where(np.asarray(all_len) > 2)[0]
                 choice = random.choice(possible_choices)
                 all_len[choice] = all_len[choice] - 1
-
 
         for i in range(len(all_len)):
            all_sents.append(random.choice(self.grammar[all_len[i]]))
