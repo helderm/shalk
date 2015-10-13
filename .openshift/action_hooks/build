@@ -13,8 +13,8 @@ fi
 source $VIRTENV_HOME/bin/activate
 
 #install dependencies
-pip uninstall shalk --no-cache-dir --yes
-pip install --no-cache-dir $OPENSHIFT_REPO_DIR/
+pip uninstall shalk  --yes
+pip install --download-cache $OPENSHIFT_DATA_DIR $OPENSHIFT_REPO_DIR/
 
 #import the ngrams db files
 if [ ! -d $OPENSHIFT_DATA_DIR/ngrams ]; then
