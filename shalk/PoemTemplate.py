@@ -95,4 +95,41 @@ class PoemTemplate:
                 final_template[j].append([w, all_sents[i]])
                 i = i + 1
 
-        return final_template
+        sentences = []
+        word_count = 0
+        for sentence in final_template:
+            words = []
+            for word in sentence:
+                if word_count > self.punctuations[0]:
+                    words.append('.')
+                    self.punctuations = self.punctuations[1:]
+
+                w = Word(syllables=word[0], typespeech=word[1])
+                words.append(w)
+                word_count += 1
+
+            s = Sentence(words)
+
+            sentences.append(s)
+
+        return sentences
+
+class Sentence(object):
+    def __init__(self, words):
+        self.words = words
+
+    def __repr__(self):
+        strs = [ str(i) for i in self.words ]
+        return ', '.join(strs)
+
+    def __iter__(self):
+        return iter(self.words)
+
+class Word(object):
+    def __init__(self, syllables, typespeech, rhyme='*'):
+        self.syllables = syllables
+        self.typespeech = typespeech
+        self.rhyme = rhyme
+
+    def __str__(self):
+        return 'A {0} syllables {1}'.format(self.syllables, self.typespeech.lower())

@@ -92,37 +92,26 @@ class Poem():
 
 
     def generate(self):
-        print "*** HOT NEW POEM COMING RIGHT UP!!! ***"
-        template = self.template.createTemplate()
-
-        constraints = [ i for x in template for i in x ]
+        sentences = self.template.createTemplate()
 
         text = ''
-        sylSum = 0
-        currentLine = 0
-        currentLineText = ''
+        for sentence in sentences:
 
-        for i, con in enumerate(constraints):
+            chosen_words = []
+            for elem in sentence:
+                if not isinstance(elem, pt.Word):
+                    # if not Word, isa punctuation
+                    text += elem
+                    continue
 
+                newWord = self.nextWord(chosen_words, elem)
+                if len(newWord) == 0:
+                    return
 
+                text += newWord + ' '
+                chosen_words.append(newWord)
 
-            eol = (sylSum == len(self.pattern[currentLine]) - template[currentLine][-1][0])
-
-            newestWord = self.nextWord(text, con, eol)
-            if len(newestWord) == 0:
-                print('POEM WAS THROWN AWAY....')
-                return
-            text += newestWord  + " "
-            currentLineText += newestWord  + " "
-            if i in self.template.punctuations:
-                currentLineText = currentLineText[0:len(currentLineText)-1] + ". "
-            sylSum += con[0]
-            if(sylSum == len(self.pattern[currentLine])):
-                print '### {0} ###'.format(currentLineText)
-                currentLine += 1
-                sylSum = 0
-                currentLineText = ''
-
+            text += '\n'
 
         return text
 
@@ -178,11 +167,11 @@ class Poem():
 
     #This is our ngram generating function.
 
-    def nextWord(self, text, con, eol):
+    def nextWord(self, words, nextword, eol=False):
         #Constants for the smoothing
 		#TODO: Catch the 'X' part of speech case
-        text = text[0:len(text)-1]
-        words = text.split(" ")
+        #text = text[0:len(text)-1]
+        #words = text.split(" ")
         N = len(words)
         smoothing = 'backoff'
         rhyming = False
@@ -192,52 +181,52 @@ class Poem():
         if eol and self.rhymesch:
             rhyming = True
             rhyme = self.rhymesch.get_curr_rhyme()
-            if rhyme:
-                query['rhyme'] = rhyme
 
-        query = {"syllables" : con[0], "type" : con[1]}
+        query = { "syllables" : nextword.syllables, "type" : nextword.typespeech }
         if rhyming and rhyme:
             query['rhyme'] = rhyme
 
         unigrams = self.ngrams.find(query, n=2, limit=Poem.QUERY_LIMIT)
 
         if(N<=1):
-            choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams)
+            choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams)
             if len(choice) == 0:
                 return []
             if rhyming and not rhyme:
                 self.rhymesch.add_rhyme(rh)
             return choice
 
-        query = {"word0" : words[N-1], "syllables" : con[0], "type" : con[1]}
-        if rhyming and rhyme:
-            query['rhyme'] = rhyme
+        #query = {"word0" : words[N-1], "syllables" : con[0], "type" : con[1]}
+        query['word0'] = words[N-1]
 
         bigrams = self.ngrams.find(query, n=2, limit=Poem.QUERY_LIMIT)
 
         if(N<=2):
-            choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams)
+            choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams, bigrams)
             if rhyming and not rhyme:
                 self.rhymesch.add_rhyme(rh)
             return choice
 
-        query = {"word0" : words[N-2], "word1" : words[N-1], "syllables" : con[0], "type" : con[1] }
-        if rhyming and rhyme:
-            query['rhyme'] = rhyme
+        query['word0'] = words[N-2]
+        query['word1'] = words[N-1]
+        #query = {"word0" : words[N-2], "word1" : words[N-1], "syllables" : con[0], "type" : con[1] }
 
         trigrams = self.ngrams.find(query, n=3, limit=Poem.QUERY_LIMIT)
         if(N<=3):
-            choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams, trigrams)
+            choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams, bigrams, trigrams)
             if rhyming and not rhyme:
                 self.rhymesch.add_rhyme(rh)
             return choice
 
-        query = {"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : con[0], "type" : con[1]}
-        if rhyming and rhyme:
-            query['rhyme'] = rhyme
+        query['word0'] = words[N-3]
+        query['word1'] = words[N-2]
+        query['word2'] = words[N-1]
+        #query = {"word0" : words[N-3], "word1" : words[N-2], "word2" : words[N-1], "syllables" : con[0], "type" : con[1]}
+        #if rhyming and rhyme:
+        #    query['rhyme'] = rhyme
 
         fourgrams = self.ngrams.find(query, n=4, limit=Poem.QUERY_LIMIT)
-        choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams, trigrams, fourgrams)
+        choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams, bigrams, trigrams, fourgrams)
 
         if rhyming and not rhyme:
             self.rhymesch.add_rhyme(rh)
@@ -246,9 +235,13 @@ class Poem():
 def main():
     p = Poem('haiku')
     for x in range(0, 20):
-        p.generate()
+        print "*** HOT NEW POEM COMING RIGHT UP!!! ***"
+        text = p.generate()
+        if not text:
+            print "Yeah, not this time... Let me try again!"
+            continue
 
-
+        print text
 
 if __name__ == "__main__":
     main()
