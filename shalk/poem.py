@@ -8,17 +8,20 @@ from random import randint
 
 
 class Poem():
+
+    QUERY_LIMIT = 1024 * 4
+
     def __init__(self, type, db=None):
         self.ngrams = Ngrams(db)
-        
+
         if type == 'haiku':
             self.pattern = ['*****', '*******', '*****']
-            self.rs = '***'
-            
+            self.rs = None
+
         if type == 'tanka':
             self.pattern = ['*****', '*******', '*****', '*******', '*******']
-            self.rs = '*****'
-            
+            self.rs = None
+
         if type == 'limerick':
             self.pattern = []
             self.rs = 'AABBA'
@@ -30,7 +33,7 @@ class Poem():
             lengths.append(randint(8, 11))
             for length in lengths:
                 self.pattern.append('*' * length)
-                
+
         if type == 'quatrain':
             mean = randint(5, 12)
             lengths = []
@@ -83,13 +86,13 @@ class Poem():
             for length in lengths:
                 self.pattern.append('*' * length)
             self.rs = 'ABABCDCDEFEFGG'
-                
+
         self.template = pt.PoemTemplate(self.pattern, self.rs)
-        self.rhymesch = RhymeScheme(self.rs)
-     
+        self.rhymesch = RhymeScheme(self.rs) if self.rs else None
+
 
     def generate(self):
-        print "HOT NEW POEM COMING RIGHT UP:"
+        print "*** HOT NEW POEM COMING RIGHT UP!!! ***"
         template = self.template.createTemplate()
 
         constraints = [ i for x in template for i in x ]
@@ -100,14 +103,14 @@ class Poem():
         currentLineText = ''
         for con in constraints:
 
-            eol = (sylSum == len(self.pattern[currentLine]))
+            eol = (sylSum == len(self.pattern[currentLine]) - template[currentLine][-1][0])
 
             newestWord = self.nextWord(text, con, eol)
             text += newestWord  + " "
             currentLineText += newestWord  + " "
             sylSum += con[0]
             if(sylSum == len(self.pattern[currentLine])):
-                print currentLineText
+                print '### {0} ###'.format(currentLineText)
                 currentLine += 1
                 sylSum = 0
                 currentLineText = ''
@@ -182,7 +185,7 @@ class Poem():
         if rhyming and rhyme:
             query['rhyme'] = rhyme
 
-        unigrams = self.ngrams.find(query, n=2, limit = 10 )
+        unigrams = self.ngrams.find(query, n=2, limit=Poem.QUERY_LIMIT)
 
         if(N<=1):
             choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams)
@@ -194,7 +197,7 @@ class Poem():
         if rhyming and rhyme:
             query['rhyme'] = rhyme
 
-        bigrams = self.ngrams.find(query, n=2, limit = 10)
+        bigrams = self.ngrams.find(query, n=2, limit=Poem.QUERY_LIMIT)
 
         if(N<=2):
             choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams)
@@ -206,7 +209,7 @@ class Poem():
         if rhyming and rhyme:
             query['rhyme'] = rhyme
 
-        trigrams = self.ngrams.find(query, n=3, limit = 10)
+        trigrams = self.ngrams.find(query, n=3, limit=Poem.QUERY_LIMIT)
         if(N<=3):
             choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams, trigrams)
             if rhyming and not rhyme:
@@ -217,7 +220,7 @@ class Poem():
         if rhyming and rhyme:
             query['rhyme'] = rhyme
 
-        fourgrams = self.ngrams.find(query, n=4, limit = 10)
+        fourgrams = self.ngrams.find(query, n=4, limit=Poem.QUERY_LIMIT)
         choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams, bigrams, trigrams, fourgrams)
 
         if rhyming and not rhyme:

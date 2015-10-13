@@ -88,7 +88,6 @@ class PoemTemplate:
                 i = i + 1
 
 
-        print(final_template)
         return final_template
 
 
