@@ -98,19 +98,29 @@ class Poem():
         sylSum = 0
         currentLine = 0
         currentLineText = ''
-        for con in constraints:
+
+        for i, con in enumerate(constraints):
+
+
 
             eol = (sylSum == len(self.pattern[currentLine]))
 
             newestWord = self.nextWord(text, con, eol)
+            if len(newestWord) == 0:
+                print('POEM WAS THROWN AWAY....')
+                return
             text += newestWord  + " "
             currentLineText += newestWord  + " "
+            if i in self.template.punctuations:
+                currentLineText = currentLineText[0:len(currentLineText)-1] + ". "
             sylSum += con[0]
             if(sylSum == len(self.pattern[currentLine])):
                 print currentLineText
                 currentLine += 1
                 sylSum = 0
                 currentLineText = ''
+
+
         return text
 
     def weightedChoice(self, choices):
@@ -156,7 +166,11 @@ class Poem():
                 tuples2 = self.weightedTuples(bigrams, u'word1', syl)
                 return self.weightedChoice(tuples2)
             tuples1 = self.weightedTuples(unigrams, u'word1', syl)
-            return self.weightedChoice(tuples1)
+            if (len(unigrams) > 0):
+                tuples1 = self.weightedTuples(unigrams, u'word1', syl)
+                return self.weightedChoice(tuples1)
+            return [], []
+
 
 
     #This is our ngram generating function.
@@ -186,6 +200,8 @@ class Poem():
 
         if(N<=1):
             choice, rh = self.smoothedGeneration(smoothing, con[0], unigrams)
+            if len(choice) == 0:
+                return []
             if rhyming and not rhyme:
                 self.rhymesch.add_rhyme(rh)
             return choice
