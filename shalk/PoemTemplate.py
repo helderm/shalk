@@ -21,10 +21,11 @@ class PoemTemplate:
         self.grammarDistribution = [len(i) for i in self.grammar]
         self.metricPattern = mP
         self.rhymeScheme = rS
+        self.punctuations = []
 
 
     def createTemplate(self):
-
+        self.punctuations = []
         ## generate the metric template
         temp = []
         # for each line
@@ -78,6 +79,13 @@ class PoemTemplate:
         all_sents = [i for sl in all_sents for i in sl]
 
         i = 0
+        for s in all_sents:
+            if s == ".":
+                self.punctuations.append(i-1)
+                i = i -1
+            i = i+1
+
+        i = 0
         final_template = []
         for j, l in enumerate(temp):
             final_template.append([])
@@ -87,8 +95,4 @@ class PoemTemplate:
                 final_template[j].append([w, all_sents[i]])
                 i = i + 1
 
-
         return final_template
-
-
-
