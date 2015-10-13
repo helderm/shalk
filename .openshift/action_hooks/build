@@ -14,7 +14,7 @@ else
 fi
 
 #install dependencies
-pip install $OPENSHIFT_DATA_DIR $OPENSHIFT_REPO_DIR/
+pip install $OPENSHIFT_REPO_DIR/
 #pip install -r ${OPENSHIFT_REPO_DIR}requirements.txt
 
 #import the ngrams db files
