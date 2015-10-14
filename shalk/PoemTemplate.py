@@ -16,11 +16,11 @@ class PoemTemplate:
     averageSyllablesPerWord = 1.5;
     standardDerivation = 0.5;
 
-    def __init__(self, mP, rS):
+    def __init__(self, mP, rhyme_pattern):
         self.grammar = pickle.load(open("grammar", "rb"))
         self.grammarDistribution = [len(i) for i in self.grammar]
         self.metricPattern = mP
-        self.rhymeScheme = rS
+        self.rhyme_pattern = rhyme_pattern
         self.punctuations = []
 
 
@@ -95,8 +95,10 @@ class PoemTemplate:
                 final_template[j].append([w, all_sents[i]])
                 i = i + 1
 
+        # convert the old list-of-lists format the new one
         sentences = []
         word_count = 0
+        rhyme_counter = 0
         for sentence in final_template:
             words = []
             for word in sentence:
@@ -108,8 +110,11 @@ class PoemTemplate:
                 words.append(w)
                 word_count += 1
 
-            s = Sentence(words)
+            if self.rhyme_pattern:
+                words[-1].rhyme = self.rhyme_pattern[rhyme_counter]
+                rhyme_counter += 1
 
+            s = Sentence(words)
             sentences.append(s)
 
         return sentences
@@ -130,6 +135,7 @@ class Word(object):
         self.syllables = syllables
         self.typespeech = typespeech
         self.rhyme = rhyme
+        self.text = None
 
     def __str__(self):
         return 'A {0} syllables {1}'.format(self.syllables, self.typespeech.lower())
