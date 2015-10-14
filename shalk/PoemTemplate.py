@@ -32,6 +32,10 @@ class PoemTemplate:
         for s in self.metricPattern:
             line = []
             lineLength = len(s)
+            syllables_last_word = round(np.random.normal(self.averageSyllablesPerWord, self.standardDerivation))
+            syllables_last_word =  max(2.0, syllables_last_word)
+
+            lineLength = lineLength - syllables_last_word
             while lineLength > 0:
                 syllables = round(np.random.normal(self.averageSyllablesPerWord, self.standardDerivation))
                 syllables =  min(syllables, lineLength)
@@ -39,7 +43,7 @@ class PoemTemplate:
                 if (syllables > 0):
                     line.append(syllables)
                 lineLength -= syllables
-
+            line.append(syllables_last_word)
             temp.append(line)
 
         ## generate grammar tempate
@@ -51,6 +55,7 @@ class PoemTemplate:
         all_sents = []
         all_len = []
         while word_count > 0:
+
 
             partition = sum(self.grammarDistribution)
             normalized_distribution = [float(x) / partition for x in self.grammarDistribution]
@@ -73,8 +78,40 @@ class PoemTemplate:
                 choice = random.choice(possible_choices)
                 all_len[choice] = all_len[choice] - 1
 
+
+        # save line endings
+        line_endings = []
+        line_sum = 0
+
+        line_sum = 0
+        for l in temp:
+
+            for w in l:
+                line_sum = line_sum + 1
+            line_endings.append(line_sum)
+
+        sentence_sum = 0
         for i in range(len(all_len)):
-           all_sents.append(random.choice(self.grammar[all_len[i]]))
+            sent_range = range(sentence_sum+1, sentence_sum + all_len[i]+1)
+            sentence_sum = sentence_sum + all_len[i]
+            intersection_list = [v for v in sent_range if v in line_endings]
+            # restrict list to sentences that have verbs or noun at the end of line
+            restricted_list = []
+            for s in self.grammar[all_len[i]]:
+                s_without_punct = []
+                for w in s:
+                    if not w == ".":
+                        s_without_punct.append(w)
+                all_true = True
+                for r in intersection_list:
+                    if not (s_without_punct[(r-(sentence_sum-all_len[i]))-1] == 'VERB' or s_without_punct[(r-(sentence_sum-all_len[i]))-1] == 'NOUN'):
+                        all_true = False
+                if all_true:
+                    restricted_list.append(s)
+            if len(restricted_list) == 0:
+                print("Couldn't find matching template... Generating new one.")
+                return []
+            all_sents.append(random.choice(restricted_list))
 
         all_sents = [i for sl in all_sents for i in sl]
 
@@ -94,6 +131,9 @@ class PoemTemplate:
                     i = i+1
                 final_template[j].append([w, all_sents[i]])
                 i = i + 1
+
+
+        print(final_template)
 
         # convert the old list-of-lists format the new one
         sentences = []

@@ -93,6 +93,8 @@ class Poem():
 
     def generate(self):
         sentences = self.template.createTemplate()
+        while len(sentences) == 0:
+            sentences = self.template.createTemplate()
 
         text = ''
         for sentence in sentences:
