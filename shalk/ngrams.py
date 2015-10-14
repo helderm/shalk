@@ -2,6 +2,7 @@ from tornado.httpclient import HTTPClient
 import json
 import random
 import pymongo as pym
+from cache import lru_cache
 
 class Ngrams(object):
     FIND_URL = 'http://shalk-helderm.rhcloud.com/ngrams/find'
@@ -11,6 +12,13 @@ class Ngrams(object):
         self.cl = HTTPClient()
 
     def find(self, query, n, limit=0):
+        q = json.dumps(query)
+        return self._cached_find(q, n, limit)
+
+    @lru_cache()
+    def _cached_find(self, q, n, limit=0):
+
+        query = json.loads(q)
 
         # if we have a db connection, use it!
         if self.db:
@@ -24,6 +32,8 @@ class Ngrams(object):
         body = { 'query': query,
                  'n': n,
                  'limit': limit }
+
+        #print 'Querying for n{0}grams: {1}'.format(n, query)
 
         res = self.cl.fetch(Ngrams.FIND_URL, body=json.dumps(body), method='POST', request_timeout=0.0)
         ret = json.loads(res.body)
