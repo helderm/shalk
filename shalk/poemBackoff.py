@@ -88,25 +88,25 @@ class Poem():
             self.rs = 'ABABCDCDEFEFGG'
 
         self.template = pt.PoemTemplate(self.pattern, self.rs)
+        self.rhymesch = RhymeScheme(self.rs) if self.rs else None
 
 
     def generate(self):
-        rhymesch = RhymeScheme(self.rs) if self.rs else None
-
         sentences = self.template.createTemplate()
         while len(sentences) == 0:
             sentences = self.template.createTemplate()
 
         text = ''
-        chosen_words = []
         for sentence in sentences:
+
+            chosen_words = []
             for word in sentence:
                 if not isinstance(word, pt.Word):
                     # if not Word, isa punctuation
                     text += word
                     continue
 
-                word.text = self.nextWord(chosen_words, word, rhymesch)
+                word.text = self.nextWord(chosen_words, word)
                 if not word.text or not len(word.text):
                     # TODO: throw this SENTENCE away, not the entire poem!!!
                     return
@@ -169,16 +169,16 @@ class Poem():
 
 
     #This is our ngram generating function.
-    def nextWord(self, words, nextword, rhymesch):
+    def nextWord(self, words, nextword, eol=False):
         #Constants for the smoothing
 		#TODO: Catch the 'X' part of speech case
         N = len(words)
-        smoothing = 'linear'
+        smoothing = 'backoff'
         query = {}
 
         # if end of line, we need to add the rhyme constraint to the queries
-        if nextword.rhyme != '*' and rhymesch:
-            rhyme = rhymesch.get_rhyme(nextword.rhyme)
+        if nextword.rhyme != '*':
+            rhyme = self.rhymesch.get_rhyme(nextword.rhyme)
             query['rhyme'] = rhyme
 
         query['syllables'] = nextword.syllables
