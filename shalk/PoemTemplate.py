@@ -1,8 +1,7 @@
 import numpy as np
 import pickle
 import random
-
-
+import os
 
 class PoemTemplate:
 
@@ -17,7 +16,10 @@ class PoemTemplate:
     standardDerivation = 0.5;
 
     def __init__(self, mP, rhyme_pattern):
-        self.grammar = pickle.load(open("grammar", "rb"))
+        this_dir, this_filename = os.path.split(__file__)
+        grammar_file = os.path.join(this_dir, "data", "grammar.dat")
+        self.grammar = pickle.load(open(grammar_file, "rb"))
+
         self.grammarDistribution = [len(i) for i in self.grammar]
         self.metricPattern = mP
         self.rhyme_pattern = rhyme_pattern
