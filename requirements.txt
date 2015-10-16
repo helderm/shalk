@@ -1,7 +1,7 @@
-wheel
-tornado
 argparse
-pymongo
-nltk
-numpy
-joblib
+joblib==0.9.2
+nltk==3.1
+numpy==1.10.1
+pymongo==3.0.3
+tornado==4.2.1
+wheel==0.24.0
