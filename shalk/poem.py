@@ -123,7 +123,7 @@ class Poem(object):
             text += '\n'
 
         # final formatting fix
-        text = text[:-2] + '.\n'
+        text = text[0].upper() + text[1:-2] + '.\n'
         return text
 
     def _weighted_choice(self, choices):
