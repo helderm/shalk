@@ -10,17 +10,16 @@ from poem import Poem
 from ngrams import Ngrams
 
 class PoemHandler(RequestHandler):
-
+    """ Web server handler for poem generation """
     def initialize(self, db):
         self.db = db
 
     def get(self):
-        pattern = ['*****', '*******', '*****']
-        poem = Poem(pattern, db=self.db)
-
+        poem = Poem()
         self.write(poem.generate())
 
 class NgramsHandler(RequestHandler):
+    """ Web server handler for poem queries """
 
     def initialize(self, db):
         self.db = db
@@ -37,7 +36,7 @@ class NgramsHandler(RequestHandler):
 
 def main():
     define("host", default="127.0.0.1", help="Host IP")
-    define("port", default=9090, help="Port")
+    define("port", default=8080, help="Port")
     define("mongodb_url", default="127.0.0.1:27017", help="MongoDB connection URL")
     tornado.options.parse_command_line()
 
