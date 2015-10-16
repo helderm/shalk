@@ -8,7 +8,6 @@ class PoemTemplate:
     """ This class expects the structure of a poem.
         metricPattern should be a list of strings, each string corresponding to the syllables in one line.
         Use 's' for stressed, 'w' for unstressed and '*' for blanks. Currently only working for total amount.
-        rhymeScheme is currently not implemented.
         You can also passed predefined types of poems (TODO: add more).
     """
     haiku = ['*****', '*******', '*****']
@@ -111,7 +110,6 @@ class PoemTemplate:
                 if all_true:
                     restricted_list.append(s)
             if len(restricted_list) == 0:
-                print("Couldn't find matching template... Generating new one.")
                 return []
             all_sents.append(random.choice(restricted_list))
 

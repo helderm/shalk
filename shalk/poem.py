@@ -11,19 +11,21 @@ class Poem():
 
     QUERY_LIMIT = 1024 * 4
 
-    def __init__(self, type, db=None):
+    def __init__(self, ptype='haiku', smoothing='backoff', db=None):
         self.ngrams = Ngrams(db)
+        self.type = ptype
+        self.smoothing = smoothing
+        self.pattern = []
 
-        if type == 'haiku':
+        if self.type == 'haiku':
             self.pattern = ['*****', '*******', '*****']
             self.rs = None
 
-        if type == 'tanka':
+        if self.type == 'tanka':
             self.pattern = ['*****', '*******', '*****', '*******', '*******']
             self.rs = None
 
-        if type == 'limerick':
-            self.pattern = []
+        if self.type == 'limerick':
             self.rs = 'AABBA'
             lengths = []
             lengths.append(randint(8, 11))
@@ -34,7 +36,7 @@ class Poem():
             for length in lengths:
                 self.pattern.append('*' * length)
 
-        if type == 'quatrain':
+        if self.type == 'quatrain':
             mean = randint(5, 12)
             lengths = []
             for x in range(0, 3):
@@ -51,7 +53,7 @@ class Poem():
                 self.rs = 'ABAB'
             if p == 3:
                 self.rs = 'ABBA'
-        if type == 'spenserian sonnet':
+        if self.type == 'spens_sonnet':
             mean = randint(7, 12)
             lengths = []
             for x in range(0, 13):
@@ -59,7 +61,7 @@ class Poem():
             for length in lengths:
                 self.pattern.append('*' * length)
             self.rs = 'ABABBCBCCDCDEE'
-        if type == 'italian sonnet':
+        if self.type == 'ital_sonnet':
             mean = randint(7, 12)
             lengths = []
             for x in range(0, 13):
@@ -78,7 +80,7 @@ class Poem():
             if p == 3:
                 sestet = 'CDECED'
             self.rs = octave + sestet
-        if type == 'shakespearian sonnet':
+        if self.type == 'shaks_sonnet':
             mean = randint(7, 12)
             lengths = []
             for x in range(0, 13):
@@ -91,8 +93,11 @@ class Poem():
 
 
     def generate(self):
-        rhymesch = RhymeScheme(self.rs) if self.rs else None
+        """
+        Generates a new poem with a new rhyming and template
+        """
 
+        rhymesch = RhymeScheme(self.rs) if self.rs else None
         sentences = self.template.createTemplate()
         while len(sentences) == 0:
             sentences = self.template.createTemplate()
@@ -102,11 +107,11 @@ class Poem():
         for sentence in sentences:
             for word in sentence:
                 if not isinstance(word, pt.Word):
-                    # if not Word, isa punctuation
+                    # if not Word, is a punctuation
                     text = text[:-1] + word + ' '
                     continue
 
-                word.text = self.nextWord(chosen_words, word, rhymesch)
+                word.text = self._next_word(chosen_words, word, rhymesch)
                 if not word.text or not len(word.text):
                     # TODO: throw this SENTENCE away, not the entire poem!!!
                     return
@@ -118,7 +123,7 @@ class Poem():
 
         return text
 
-    def weightedChoice(self, choices):
+    def _weighted_choice(self, choices):
         total = sum(w for c, w, rhyme in choices)
         r = random.uniform(0, total)
         upto = 0
@@ -129,7 +134,7 @@ class Poem():
         return [], []
 
     #Abstraction of the repeated code in nextWord
-    def weightedTuples(self, listOfNGrams, key, syl, multiplier=1):
+    def _weighted_tuples(self, listOfNGrams, key, syl, multiplier=1):
         tuples = []
         for item in listOfNGrams:
             tuple = []
@@ -139,41 +144,39 @@ class Poem():
             tuples.append(tuple)
         return tuples
 
-    def smoothedGeneration(self, method, syl, unigrams, bigrams=[], trigrams=[], fourgrams=[]):
-        if method == 'linear':
+    def _smoothed_generation(self, syl, unigrams, bigrams=[], trigrams=[], fourgrams=[]):
+        if self.smoothing == 'linear':
             multiplierUnigrams = 1
             multiplierBigrams = 50
             multiplerTrigrams = 200
             multiplierFourgrams = 1000
-            tuples1 = self.weightedTuples(unigrams, u'word1', syl, multiplierUnigrams)
-            tuples2 = self.weightedTuples(bigrams, u'word1', syl, multiplierBigrams)
-            tuples3 = self.weightedTuples(trigrams, u'word2', syl, multiplerTrigrams)
-            tuples4 = self.weightedTuples(fourgrams, u'word3', syl, multiplierFourgrams)
-            return self.weightedChoice(tuples1+tuples2+tuples3+tuples4)
-        if method == 'backoff':
+            tuples1 = self._weighted_tuples(unigrams, u'word1', syl, multiplierUnigrams)
+            tuples2 = self._weighted_tuples(bigrams, u'word1', syl, multiplierBigrams)
+            tuples3 = self._weighted_tuples(trigrams, u'word2', syl, multiplerTrigrams)
+            tuples4 = self._weighted_tuples(fourgrams, u'word3', syl, multiplierFourgrams)
+            return self._weighted_choice(tuples1+tuples2+tuples3+tuples4)
+        if self.smoothing == 'backoff':
             if(len(fourgrams) > 0):
-                tuples4 = self.weightedTuples(fourgrams, u'word3', syl)
-                return self.weightedChoice(tuples4)
+                tuples4 = self._weighted_tuples(fourgrams, u'word3', syl)
+                return self._weighted_choice(tuples4)
             if(len(trigrams) > 0):
-                tuples3 = self.weightedTuples(trigrams, u'word2', syl)
-                return self.weightedChoice(tuples3)
+                tuples3 = self._weighted_tuples(trigrams, u'word2', syl)
+                return self._weighted_choice(tuples3)
             if(len(bigrams) > 0):
-                tuples2 = self.weightedTuples(bigrams, u'word1', syl)
-                return self.weightedChoice(tuples2)
-            tuples1 = self.weightedTuples(unigrams, u'word1', syl)
+                tuples2 = self._weighted_tuples(bigrams, u'word1', syl)
+                return self._weighted_choice(tuples2)
+            tuples1 = self._weighted_tuples(unigrams, u'word1', syl)
             if (len(unigrams) > 0):
-                tuples1 = self.weightedTuples(unigrams, u'word1', syl)
-                return self.weightedChoice(tuples1)
-            return [], []
+                tuples1 = self._weighted_tuples(unigrams, u'word1', syl)
+                return self._weighted_choice(tuples1)
 
-
+        return [], []
 
     #This is our ngram generating function.
-    def nextWord(self, words, nextword, rhymesch):
+    def _next_word(self, words, nextword, rhymesch):
         #Constants for the smoothing
 		#TODO: Catch the 'X' part of speech case
         N = len(words)
-        smoothing = 'linear'
         query = {}
 
         # if end of line, we need to add the rhyme constraint to the queries
@@ -186,7 +189,7 @@ class Poem():
         unigrams = self.ngrams.find(query, n=2, limit=Poem.QUERY_LIMIT)
 
         if(N<=1):
-            choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams)
+            choice, rh = self._smoothed_generation(nextword.syllables, unigrams)
             if len(choice) == 0:
                 return []
             return choice
@@ -195,26 +198,26 @@ class Poem():
         bigrams = self.ngrams.find(query, n=2, limit=Poem.QUERY_LIMIT)
 
         if(N<=2):
-            choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams, bigrams)
+            choice, rh = self._smoothed_generation(nextword.syllables, unigrams, bigrams)
             return choice
 
         query['word0'] = words[N-2].text
         query['word1'] = words[N-1].text
         trigrams = self.ngrams.find(query, n=3, limit=Poem.QUERY_LIMIT)
         if(N<=3):
-            choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams, bigrams, trigrams)
+            choice, rh = self._smoothed_generation(nextword.syllables, unigrams, bigrams, trigrams)
             return choice
 
         query['word0'] = words[N-3].text
         query['word1'] = words[N-2].text
         query['word2'] = words[N-1].text
         fourgrams = self.ngrams.find(query, n=4, limit=Poem.QUERY_LIMIT)
-        choice, rh = self.smoothedGeneration(smoothing, nextword.syllables, unigrams, bigrams, trigrams, fourgrams)
+        choice, rh = self._smoothed_generation(nextword.syllables, unigrams, bigrams, trigrams, fourgrams)
 
         return choice
 
 def main():
-    p = Poem('haiku')
+    p = Poem()
     for x in range(0, 100):
         print "*** HOT NEW POEM COMING RIGHT UP!!! ***"
         text = p.generate()
