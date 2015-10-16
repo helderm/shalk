@@ -121,6 +121,7 @@ class Poem():
 
             text += '\n'
 
+        text = text[:-2] + '.\n'
         return text
 
     def _weighted_choice(self, choices):
