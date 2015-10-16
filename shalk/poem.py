@@ -1,13 +1,16 @@
 import random
 
 import pymongo as pym
-import PoemTemplate as pt
+import template as pt
 from ngrams import Ngrams
 from rhyme import RhymeScheme
 from random import randint
 
 
-class Poem():
+class Poem(object):
+    """
+    Main class responsible for generating poems
+    """
 
     QUERY_LIMIT = 1024 * 4
 
@@ -96,7 +99,6 @@ class Poem():
         """
         Generates a new poem with a new rhyming and template
         """
-
         rhymesch = RhymeScheme(self.rs) if self.rs else None
         sentences = self.template.createTemplate()
         while len(sentences) == 0:
@@ -121,6 +123,7 @@ class Poem():
 
             text += '\n'
 
+        # final formatting fix
         text = text[:-2] + '.\n'
         return text
 

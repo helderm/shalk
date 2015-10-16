@@ -1,7 +1,11 @@
 import random
 
 class RhymeScheme(object):
+    """ Class responsible for associating each ryme type (A, B, C) with its
+         corresponding database representation
+    """
 
+    # these rhymes are know to be frequent in our database
     GOOD_RHYMES = ['AH0ND', 'ER0', 'AE1T', 'IY1', 'AH0L', 'IH0NG', 'IY0', 'AH0N', 'AH0L', 'AH0', 'UW1', 'AH1V']
 
     def __init__(self, pattern):
@@ -16,24 +20,3 @@ class RhymeScheme(object):
             self.rhymes[rtype] = random.choice(possib_rhymes)
 
         return self.rhymes.get(rtype)
-
-    def add_rhyme(self, rvalue):
-        rtype = self.pattern[self.curr_rhyme-1]
-
-        self.rhymes[rtype] = rvalue
-
-    def get_curr_rhyme(self, rtype):
-        rtype = self.pattern[self.curr_rhyme]
-
-        self.curr_rhyme += 1
-        if self.curr_rhyme >= len(self.pattern):
-            self.curr_rhyme = 0
-
-        return self.rhymes.get(rtype, None)
-
-
-
-
-
-
-

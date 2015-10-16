@@ -3,14 +3,10 @@ import pickle
 import random
 import os
 
-class PoemTemplate:
-
-    """ This class expects the structure of a poem.
+class PoemTemplate(object):
+    """ This class represents the structure of a poem
         metricPattern should be a list of strings, each string corresponding to the syllables in one line.
-        Use 's' for stressed, 'w' for unstressed and '*' for blanks. Currently only working for total amount.
-        You can also passed predefined types of poems (TODO: add more).
     """
-    haiku = ['*****', '*******', '*****']
     averageSyllablesPerWord = 1.5;
     standardDerivation = 0.5;
 
@@ -23,7 +19,6 @@ class PoemTemplate:
         self.metricPattern = mP
         self.rhyme_pattern = rhyme_pattern
         self.punctuations = []
-
 
     def createTemplate(self):
         self.punctuations = []
@@ -168,6 +163,7 @@ class PoemTemplate:
         return sentences
 
 class Sentence(object):
+    """ List of words and punctuation in a line """
     def __init__(self, words):
         self.words = words
 
@@ -179,6 +175,10 @@ class Sentence(object):
         return iter(self.words)
 
 class Word(object):
+    """ Representation of a word.
+        Initially it contains only the set of contraints for the database query.
+        Later it will be feedes with the chosen word for that set of contraints
+    """
     def __init__(self, syllables, typespeech, rhyme='*'):
         self.syllables = syllables
         self.typespeech = typespeech

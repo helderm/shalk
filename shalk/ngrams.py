@@ -5,6 +5,15 @@ import pymongo as pym
 from cache import lru_cache
 
 class Ngrams(object):
+    """ This class is a database wrapper for the Ngrams queries. It has 2 run
+    modes: server and client. The server actually has the connection for the
+    database, and is responsible for doing the queries in an efficient way.
+    This mode is run on the server hosted on `FIND_URL` and the results are
+    returned through the web server.
+    The client dont actually has the db connection, and it get the results by
+    querying the server through HTTP POST's
+    """
+
     FIND_URL = 'http://shalk-helderm.rhcloud.com/ngrams/find'
 
     def __init__(self, db=None):
@@ -32,8 +41,6 @@ class Ngrams(object):
         body = { 'query': query,
                  'n': n,
                  'limit': limit }
-
-        #print 'Querying for n{0}grams: {1}'.format(n, query)
 
         res = self.cl.fetch(Ngrams.FIND_URL, body=json.dumps(body), method='POST', request_timeout=0.0)
         ret = json.loads(res.body)
