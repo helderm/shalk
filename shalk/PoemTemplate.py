@@ -134,27 +134,35 @@ class PoemTemplate:
                 final_template[j].append([w, all_sents[i]])
                 i = i + 1
 
-
-        print(final_template)
-
         # convert the old list-of-lists format the new one
         sentences = []
         word_count = 0
         rhyme_counter = 0
         for sentence in final_template:
             words = []
+
+            # append words to the sentence
             for word in sentence:
                 if word_count > self.punctuations[0]:
-                    words.append('.')
+                    words.append(',')
                     self.punctuations = self.punctuations[1:]
 
                 w = Word(syllables=word[0], typespeech=word[1])
                 words.append(w)
                 word_count += 1
 
+            # add the rhyme at the end of the sentence
             if self.rhyme_pattern:
                 words[-1].rhyme = self.rhyme_pattern[rhyme_counter]
                 rhyme_counter += 1
+
+            # fix punctuation position and type
+            if not isinstance(words[0], Word):
+                words = words[1:]
+                if len(sentences) and isinstance(sentences[-1].words[-1], Word):
+                    sentences[-1].words.append('.')
+            if not isinstance(words[-1], Word):
+                words[-1] = '.'
 
             s = Sentence(words)
             sentences.append(s)
@@ -179,5 +187,10 @@ class Word(object):
         self.rhyme = rhyme
         self.text = None
 
+    def __repr__(self):
+        return str(self)
+
     def __str__(self):
-        return 'A {0} syllables {1}'.format(self.syllables, self.typespeech.lower())
+        if self.text:
+            return self.text
+        return 'A {0} syllables {1}{2}'.format(self.syllables, self.typespeech.lower(), ' '+self.rhyme if self.rhyme != '*' else '')

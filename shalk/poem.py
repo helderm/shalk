@@ -103,7 +103,7 @@ class Poem():
             for word in sentence:
                 if not isinstance(word, pt.Word):
                     # if not Word, isa punctuation
-                    text += word
+                    text = text[:-1] + word + ' '
                     continue
 
                 word.text = self.nextWord(chosen_words, word, rhymesch)
