@@ -1,6 +1,6 @@
 # shalk
 
-Shalk is a poem text generator!
+Shalk is a text generator for poems! With it you can create Haikus, Tankas and even some rhyming Quatrains! Give it a try!
 
 ### Installing
 
